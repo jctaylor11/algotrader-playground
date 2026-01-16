@@ -1,5 +1,6 @@
 import asyncio
 from binance import AsyncClient, BinanceSocketManager
+from datetime import datetime
 
 async def trade_stream_sample(): 
     """
@@ -35,8 +36,8 @@ async def trade_stream(bm):
     ts = bm.trade_socket('BTCUSDT')
     async with ts as tscm:
         for _ in range(10):
-            res = await tscm.recv()
-            print(res)
+            response = await tscm.recv()
+            print_payload_cb(response)
 
     
 # Kline socket stream core function
@@ -44,8 +45,8 @@ async def kline_stream(bm):
     ks = bm.kline_socket('BTCUSDT')
     async with ks as kscm:
         for _ in range(10):
-            res = await kscm.recv()
-            print(res)
+            response = await kscm.recv()
+            print_payload_cb(response)
 
 
 # Returns the trade streams
@@ -77,7 +78,33 @@ async def run_all_streams():
     await client.close_connection()
 
 
+def print_payload_cb(payload):
+    type = payload['e']
+
+    if (type == 'trade'):
+        price = payload['p']
+        quantity = payload['q']
+        buyer_mm = payload['m']     # True if the trade was an aggressive sell
+        side = "Aggressive Sell" if buyer_mm else "Aggressive Buy"
+        trade_time = payload['T']
+
+        print(f"Price: {price} | Quantity: {quantity} | {side} | Trade time: {datetime.fromtimestamp(trade_time/1000).strftime("%H:%M:%S")}")
+
+    elif (type == 'kline'):
+        open_price = payload['k']['o']
+        high = payload['k']['h']
+        low = payload['k']['l']
+        close_price = payload['k']['c']
+        volume = payload['k']['v']
+        
+        print(f"Open: {open_price} | High: {high} | Low: {low} | Close: {close_price} | Volume: {volume}")
+
+
 # For testing:
 # asyncio.run(run_kline_stream())
 # asyncio.run(run_trade_stream())
 # asyncio.run(run_all_streams())
+
+
+
+
