@@ -4,7 +4,7 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 
-from src.data.feed_handler import parse_ticker
+from src.data.feed_handler import parse_payload
 from src.strategies.random_test import random_test_strategy
 from src.execution.executor import execute_order
 
@@ -13,41 +13,59 @@ api_key = os.getenv("BINANCE_API_KEY")
 api_secret = os.getenv("BINANCE_SECRET_KEY")
 
 
-# random_strategy_cb is the callback function which uses the data stream to execute the strategy
-async def random_strategy_cb(client, payload):
-    # Parse payload
-    time, price = parse_ticker(payload)
+class Bot: 
+    def __init__(self, data_handler, strategy, execution):
+        self.data_handler = data_handler
+        self.strategy = strategy
+        self.execution = execution
 
-    print(f"Time: {time} | Price: {price}")
+    async def on_market_data(self, client, payload):
+        # Parse the payload
+        time, price = self.data_handler(payload)           
 
-    # Random strategy for testing, where it will buy if price is divisible by 2
-    trade_signal = random_test_strategy(price)
+        print(f"Time: {time} | Price: {price}")         
 
-    # Send the trade signal to execution function
-    if trade_signal != "HOLD":
-        await execute_order(client, symbol="BTCUSDT", trade_signal=trade_signal, quantity=0.01)       # Hard coding symbol and quantity for now while testing
+        # Get trade signal depending on chosen strategy
+        trade_signal = self.strategy(price)      
 
+        # Send trade signal to execution
+        if trade_signal != "HOLD":                     
+            await self.execution(
+                client, 
+                symbol="BTCUSDT",           # Hard coded while testing
+                trade_signal=trade_signal, 
+                quantity=0.01               # Hard coded while testing
+            )      
+    
 
 async def main():
     # Initliase Binance client 
     client = await AsyncClient.create(api_key, api_secret, testnet=True)
 
-    # Set up the Binance socket
+    # Set up the Binance socket. Using miniticker_socker for just current price - it gives 24h OHLCV. For other intervals, use Kline. 
     bm = BinanceSocketManager(client)
-    ts = bm.symbol_miniticker_socket(symbol="BTCUSDT")
+    ts = bm.symbol_miniticker_socket(symbol="BTCUSDT")  
 
+    # Declaring which functions handle each module
+    data_handler = parse_payload
+    strategy = random_test_strategy
+    execution = execute_order
+
+    # Instantiating the object
+    bot = Bot(data_handler, strategy, execution)
+
+    # Main event loop
     try:
         async with ts as tscm: 
             while True:
                 response = await tscm.recv()
-                await random_strategy_cb(client, response)
+                await bot.on_market_data(client, response)
 
     finally:
         await client.close_connection()
 
 
 asyncio.run(main())
-
 
 
 
