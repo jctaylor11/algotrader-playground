@@ -211,3 +211,6 @@ __marimo__/
 
 # Anaconda
 anaconda_projects/
+
+# All user-saved ohlcv csv data
+ohlcv/ 
