@@ -213,4 +213,4 @@ __marimo__/
 anaconda_projects/
 
 # All user-saved ohlcv csv data
-ohlcv/ 
+raw_ohlcv/ 

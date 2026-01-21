@@ -41,12 +41,38 @@ def save_binance_ohlcv(symbol, interval, start=None):
         earliest_timestamp = client._get_earliest_valid_timestamp(symbol, interval)
         start = datetime.fromtimestamp(earliest_timestamp / 1000).strftime("%Y-%m-%d")   # Formating for filename
 
-    df = get_binance_ohlcv(symbol, interval, start)
+    complete = False
+    new_start_time = start
+    while not complete: 
+        
+        if start == new_start_time:     # To initialise df if it's the first iteration
+            df = get_binance_ohlcv(symbol, interval, start)
+        else:
+            df = pd.concat([df, get_binance_ohlcv(symbol, interval, new_start_time)])
 
+        # Get the a latest time
+        latest_time = df.index.max()
+        print(f"Saved until: {latest_time}")
+
+        new_start_time = (latest_time + pd.Timedelta(interval))
+
+        todays_date = pd.Timestamp.now().normalize()
+        if new_start_time >= todays_date:
+            complete = True
+        else:
+            new_start_time = new_start_time.strftime("%Y-%m-%d %H:%M:%S")     # String format so it can be parsed by get_binance_ohlcv function
+
+    # Remove any duplicates just to make sure - Though there shouldn't be any considering the pd.Timedelta(interval)
+    duplicates = df.index.duplicated()
+    df = df[~duplicates]
+    print(f"Duplicates removed: {df[duplicates]}. (Should be an empty list - non-empty suggests logic error)")
+
+    # Saving the data to csv
     filename = f"{symbol}_{interval}_{start}"
+    df.to_csv(f"data/raw_ohlcv/{filename}.csv", index=True)
 
-    df.to_csv(f"src/data/ohlcv/{filename}.csv", index=True)
 
 
-save_binance_ohlcv('BTCUSDT', '1h')
+save_binance_ohlcv('BTCUSDT', '1w')
+
 
