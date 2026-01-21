@@ -17,6 +17,11 @@ client = Client(api_key, api_secret, tld = "com")
 def get_binance_ohlcv(symbol, interval, start, end=None):
     """Fetch and clean historical OHLCV data from Binance using python-binance wrapper"""
     bars = client.get_historical_klines(symbol, interval, start, end, limit=1000)
+
+    # Returns empty dataframe if it didn't get a response
+    if not bars:
+        return pd.DataFrame()
+
     time.sleep(0.3)     # To ensure it doesn't violate Binance's API rate limits 
     df = pd.DataFrame(bars)
                       
@@ -41,38 +46,36 @@ def save_binance_ohlcv(symbol, interval, start=None):
         earliest_timestamp = client._get_earliest_valid_timestamp(symbol, interval)
         start = datetime.fromtimestamp(earliest_timestamp / 1000).strftime("%Y-%m-%d")   # Formating for filename
 
-    complete = False
-    new_start_time = start
-    while not complete: 
+    original_start = start
+    data_chunks = []
+    while True: 
         
-        if start == new_start_time:     # To initialise df if it's the first iteration
-            df = get_binance_ohlcv(symbol, interval, start)
-        else:
-            df = pd.concat([df, get_binance_ohlcv(symbol, interval, new_start_time)])
+        data_chunk = get_binance_ohlcv(symbol, interval, start)
 
-        # Get the a latest time
-        latest_time = df.index.max()
-        print(f"Saved until: {latest_time}")
+        if data_chunk.empty:
+            # It's taken up to latest date
+            break
+        else: 
+            data_chunks.append(data_chunk)
 
-        new_start_time = (latest_time + pd.Timedelta(interval))
+        latest_timestamp = data_chunk.index.max()
+        start = latest_timestamp + pd.Timedelta(interval)       # Advancing time cursor to avoid duplicates
+        start = start.strftime("%Y-%m-%d")                      # Convert to string as required by get_binance_ohlcv 
 
-        todays_date = pd.Timestamp.now().normalize()
-        if new_start_time >= todays_date:
-            complete = True
-        else:
-            new_start_time = new_start_time.strftime("%Y-%m-%d %H:%M:%S")     # String format so it can be parsed by get_binance_ohlcv function
+        print(f"Start: {start}")
 
-    # Remove any duplicates just to make sure - Though there shouldn't be any considering the pd.Timedelta(interval)
-    duplicates = df.index.duplicated()
-    df = df[~duplicates]
-    print(f"Duplicates removed: {df[duplicates]}. (Should be an empty list - non-empty suggests logic error)")
+    # Logic to concat list of dfs and save to csv
+    df_to_save = pd.concat(data_chunks)
 
-    # Saving the data to csv
-    filename = f"{symbol}_{interval}_{start}"
-    df.to_csv(f"data/raw_ohlcv/{filename}.csv", index=True)
+    # Remove any duplicates
+    duplicates = df_to_save.index.duplicated()
+    df_to_save = df_to_save[~duplicates]
+    print(f"Duplicates removed: {duplicates.sum()}. (Should be 0 - non-zero suggests logic error)")
+
+    df_to_save.to_csv(f"data/raw_ohlcv/{symbol}-{interval}-{original_start}.csv", index=True)
 
 
 
-save_binance_ohlcv('BTCUSDT', '1w')
+save_binance_ohlcv('BTCUSDT', '1d')
 
 
