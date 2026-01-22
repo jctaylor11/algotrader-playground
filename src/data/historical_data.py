@@ -42,28 +42,26 @@ def save_binance_ohlcv(symbol, interval, start=None):
     Save historical ohlcv. If no start is defined, entire history will be saved. 
     Can also be downloaded from https://data.binance.vision/?prefix=data/ to reduce API traffic
     """
-    if (start == None):
+    if start is None:
         earliest_timestamp = client._get_earliest_valid_timestamp(symbol, interval)
         start = datetime.fromtimestamp(earliest_timestamp / 1000).strftime("%Y-%m-%d")   # Formating for filename
 
-    original_start = start
+    original_start = start           # Saving original start for filename
+    latest_timestamp = None
     data_chunks = []
     while True: 
-        
+        print(f"Pulling batch: {start}")
+
         data_chunk = get_binance_ohlcv(symbol, interval, start)
 
-        if data_chunk.empty:
-            # It's taken up to latest date
-            break
+        if data_chunk.empty or latest_timestamp == data_chunk.index.max():          # Second condition prevents infinite loop at boundary
+            break               # Pulled all data up to today's date
         else: 
             data_chunks.append(data_chunk)
 
         latest_timestamp = data_chunk.index.max()
-        start = latest_timestamp + pd.Timedelta(interval)       # Advancing time cursor to avoid duplicates
-        start = start.strftime("%Y-%m-%d")                      # Convert to string as required by get_binance_ohlcv 
-
-        print(f"Start: {start}")
-
+        start = str(latest_timestamp + pd.Timedelta(interval))       # Advancing time cursor to avoid duplicates
+        
     # Logic to concat list of dfs and save to csv
     df_to_save = pd.concat(data_chunks)
 
@@ -75,7 +73,6 @@ def save_binance_ohlcv(symbol, interval, start=None):
     df_to_save.to_csv(f"data/raw_ohlcv/{symbol}-{interval}-{original_start}.csv", index=True)
 
 
-
-save_binance_ohlcv('BTCUSDT', '1d')
+save_binance_ohlcv('BTCUSDT', '1h')
 
 
