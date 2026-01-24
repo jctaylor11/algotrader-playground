@@ -20,13 +20,27 @@ def backtester():
     data['Strategy'] = data['Position'].shift(1) * data['Return']
     data['C_strategy'] = data['Strategy'].cumsum().apply(np.exp)
 
-    # Show results
+    # Performance metrics
+    data_interval = data.index.diff().median()          # Takes the median than any absolute for reliability
+    annual_periods = pd.Timedelta(days=365.25) / data_interval  # Infers number of periods over the year from the data, for mu and stdev
+
+    ann_mean_log = data[['Return', 'Strategy']].mean() * annual_periods     # Return is log return, and annual periods is inferred from index
+    ann_mean = np.exp(ann_mean_log) - 1
+    ann_mean.name = 'Annualised Mean'
+
+    ann_std = data[['Return', 'Strategy']].std() * np.sqrt(annual_periods)
+    ann_std.name = 'Annualised StDev'
+
+    sharpe = ann_mean / ann_std
+    sharpe.name = 'Sharpe Ratio'
+
+    performance = pd.concat([ann_mean, ann_std, sharpe], axis=1)
+    print(performance)
+
+    # Plot results
     data[['C_return', 'C_strategy']].plot(figsize=(12,8))
     plt.legend(['Buy and Hold', 'Your Strategy'])
     plt.show()
- 
-
-
 
 
 backtester()
