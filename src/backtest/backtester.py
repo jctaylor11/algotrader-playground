@@ -37,9 +37,16 @@ def backtester():
     performance = pd.concat([ann_mean, ann_std, sharpe], axis=1)
     print(performance)
 
+    # Apply trading commissions
+    commission = 0.1 / 100 
+    log_commission_multiplier = np.log(1 - commission)        # To multiply (add in log space) strategy returns with to get net return per trade after fees 
+    data['Trade'] = data['Position'].diff().fillna(0).abs()         # 1 in every entry where a trade took place
+    data['Strategy_net'] = data['Strategy'] + data['Trade'] * log_commission_multiplier
+    data['C_strategy_net'] = data['Strategy_net'].cumsum().apply(np.exp)
+
     # Plot results
-    data[['C_return', 'C_strategy']].plot(figsize=(12,8))
-    plt.legend(['Buy and Hold', 'Your Strategy'])
+    data[['C_return', 'C_strategy', 'C_strategy_net']].plot(figsize=(12,8))
+    plt.legend(['Buy and Hold', 'Your Strategy', 'Your strategy (with fees)'])
     plt.show()
 
 
