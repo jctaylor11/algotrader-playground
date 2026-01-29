@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from src.visualisation.plot_trades import plot_trades
 
@@ -23,7 +24,9 @@ def ma_crossover_strategy(data):
     # Strategy implementation
     data.loc[data['condition'], 'position'] = 1
 
-    # plot_trades(data, ['ma_s', 'ma_l'])
+    fig, ax = plot_trades(data, ['ma_s', 'ma_l'])
+    ax.set_title('Moving Average Strategy Visualisation')
+    plt.show()
 
     return data['position']
 

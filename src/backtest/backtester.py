@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from src.strategies.ma_crossover import ma_crossover_strategy
-from src.visualisation.plot_trades import plot_trades
+from src.visualisation.plot_trades import plot_trades, overlay_trades
 
 def backtester():
     # Getting data
@@ -18,8 +18,8 @@ def backtester():
 
     # Strategy
     data['position'] = ma_crossover_strategy(data)
-    plot_trades(data)
 
+    # Calculate return from strategy positions
     data['strategy'] = data['position'].shift(1) * data['return']
     data['c_strategy'] = np.exp(data['strategy'].cumsum())
 
@@ -48,8 +48,11 @@ def backtester():
     data['c_strategy_net'] = np.exp(data['strategy_net'].cumsum())
 
     # Plot results
-    data[['c_return', 'c_strategy', 'c_strategy_net']].plot(figsize=(12,8))
-    plt.legend(['Buy and Hold', 'Your Strategy', 'Your strategy (with fees)'])
+    fig, ax = plt.subplots(figsize=(12,8))
+    data[['c_return', 'c_strategy', 'c_strategy_net']].plot(ax=ax)
+    ax = overlay_trades(data, ax)
+    ax.legend(['Buy and Hold', 'Your Strategy', 'Your strategy (with fees)'])
+    ax.set_title('Strategy Backtest Performance')
     plt.show()
 
 
