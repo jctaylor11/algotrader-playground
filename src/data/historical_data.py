@@ -25,12 +25,12 @@ def get_binance_ohlcv(symbol, interval, start, end=None):
     time.sleep(0.3)     # To ensure it doesn't violate Binance's API rate limits 
     df = pd.DataFrame(bars)
                       
-    df.columns = ["Open time", "Open", "High", "Low", "Close", "Volume", "Close time", "Quote asset volume", "Number of trades", "Taker buy base asset volume", "Taker buy quote asset volume", "Ignore"]
+    df.columns = ["open_time", "open", "high", "low", "close", "volume", "close_time", "quote_asset_volume", "num_trades", "taker_buy_base_asset_volume", "taker_buy_quote_asset_volume", "ignore"]
 
-    df["Date"] = pd.to_datetime(df["Open time"], unit='ms')
-    df.set_index("Date", inplace = True)
+    df["date"] = pd.to_datetime(df["open_time"], unit='ms')
+    df.set_index("date", inplace = True)
 
-    df = df[["Open", "High", "Low", "Close", "Volume"]].copy()
+    df = df[["open", "high", "low", "close", "volume"]].copy()
 
     for col in df.columns:
         df[col] = pd.to_numeric(df[col], errors = "coerce")
