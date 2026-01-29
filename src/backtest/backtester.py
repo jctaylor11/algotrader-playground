@@ -18,6 +18,7 @@ def backtester():
 
     # Strategy
     data['position'] = ma_crossover_strategy(data)
+    plot_trades(data)
 
     data['strategy'] = data['position'].shift(1) * data['return']
     data['c_strategy'] = np.exp(data['strategy'].cumsum())

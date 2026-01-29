@@ -23,7 +23,7 @@ def ma_crossover_strategy(data):
     # Strategy implementation
     data.loc[data['condition'], 'position'] = 1
 
-    plot_trades(data)
+    # plot_trades(data, ['ma_s', 'ma_l'])
 
     return data['position']
 
