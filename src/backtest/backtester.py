@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from src.strategies.ma_crossover import ma_crossover_strategy
+from src.visualisation.plot_trades import plot_trades
 
 def backtester():
     # Getting data
