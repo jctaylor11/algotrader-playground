@@ -18,7 +18,7 @@ def plot_trades(data, indicators=None):
         except KeyError:
             print(f"'{indicator}' is not a column in dataframe - excluded from plot")
 
-    ax = overlay_trades(data, ax)
+    ax = overlay_trades(data, ax)       # TODO: This could be moved out of this plot_trades, and plot_trdaes focused on plotting indicators. Trades can be overlayed from script after ax is returned
     
     ax.legend()
 

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from src.visualisation.plot_trades import plot_trades
 
-def ma_crossover_strategy(data):
+def ma_crossover_strategy(data, params):
     # So it doesn't interfere with original data passed in
     data = data.copy()          
 
@@ -11,8 +11,8 @@ def ma_crossover_strategy(data):
     data['position'] = 0        
 
     # Setting ma strategy parameters
-    MA_S = 50
-    MA_L = 100
+    MA_S = params[0]
+    MA_L = params[1]
 
     # Calculating the MA prices
     data['ma_s'] = data['close'].rolling(window=MA_S).mean()
@@ -24,9 +24,10 @@ def ma_crossover_strategy(data):
     # Strategy implementation
     data.loc[data['condition'], 'position'] = 1
 
-    fig, ax = plot_trades(data, ['ma_s', 'ma_l'])
-    ax.set_title('Moving Average Strategy Visualisation')
-    plt.show()
+    # fig, ax = plot_trades(data, ['ma_s', 'ma_l'])
+    # ax.set_title('Moving Average Strategy Visualisation')
+    # plt.show()
 
     return data['position']
+
 
