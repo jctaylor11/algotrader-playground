@@ -19,7 +19,7 @@ def main():
     # Populate empty array with performance for all different combinations
     performance_results = []
     for combination in combinations:
-        performance_results.append([combination[0], combination[1], strategy_backtest(df, combination)])
+        performance_results.append([combination[0], combination[1], strategy_backtest(df, combination)])        # TODO: Seems inefficient, perhaps a vectorised way
     
     results = pd.DataFrame(performance_results)
     results.columns = ['MA_S', 'MA_L', 'Performance']
