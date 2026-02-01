@@ -7,29 +7,29 @@ from src.data.preprocessing import prepare_for_log, remove_outliers_by_percentil
 from src.analysis.statistical import analyse_contingency
 
 # Load data
-data = pd.read_csv("data/raw_ohlcv/BTCUSDT-1h-2017-08-17.csv", index_col='Date', parse_dates=['Date'])
-data = data[["Close", "Volume"]].copy()
+data = pd.read_csv("data/raw_ohlcv/BTCUSDT-1h-2017-08-17.csv", index_col='date', parse_dates=['date'])
+data = data[["close", "volume"]].copy()
 
 # Calculate log returns
-data["Return"] = data["Close"].div(data["Close"].shift(1))     # Gives return factor for that period
-data["Return"] = prepare_for_log(data["Return"])
-data["Return"] = np.log(data["Return"])    
+data["simple_return"] = data["close"].div(data["close"].shift(1))     # Gives return factor for that period
+data["simple_return"] = prepare_for_log(data["simple_return"])
+data["log_return"] = np.log(data["simple_return"])    
 
 # Calculate log volume change (requires cleaning first to remove value inapplicable with log)
-data['Volume'] = prepare_for_log(data['Volume'])
-data['Vol_ch'] = np.log(data['Volume'].div(data['Volume'].shift(1)))
+data['volume'] = prepare_for_log(data['volume'])
+data['log_vol_ch'] = np.log(data['volume'].div(data['volume'].shift(1)))
 
 # Removing extreme outliers
-data = remove_outliers_by_percentile(data, 'Vol_ch', 1, 99)
+data = remove_outliers_by_percentile(data, 'log_vol_ch', 1, 99)
 
 # Plot the scatter
-plt.scatter(x=data['Vol_ch'], y=data['Return'])
+plt.scatter(x=data['log_vol_ch'], y=data['log_return'])
 plt.xlabel("Volume Change")
 plt.ylabel("Return")
 plt.show()
 
 # Discretise into bins and generate contigency matrix for heatmap
-matrix = analyse_contingency(data, 'Return', 'Vol_ch', 10)
+matrix = analyse_contingency(data, 'log_return', 'log_vol_ch', 10)
 
 # Show the heatmap
 plt.figure(figsize=(12,8))

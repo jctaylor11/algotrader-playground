@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-from itertools import product
 
 from src.strategies.ma_crossover import ma_crossover_strategy
 from src.optimisation import grid_search_strategy, grid_search_optimal_params

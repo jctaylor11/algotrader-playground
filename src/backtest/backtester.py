@@ -12,26 +12,25 @@ def backtester():
     data = data.loc['2021-01':'2021-02'].copy()
 
     # Buy and hold strategy as benchmark to compare strategy
-    data['return'] = data['close'].div(data['close'].shift(1))
-    data['return'] = np.log(data['return'])
-    data['c_return'] = np.exp(data['return'].cumsum())     # C for cumulative results
+    data['simple_return'] = data['close'].div(data['close'].shift(1))
+    data['log_return'] = np.log(data['simple_return'])
+    data['cum_return'] = np.exp(data['log_return'].cumsum())     # C for cumulative results
 
     # Strategy
-    data['position'] = ma_crossover_strategy(data)
+    data['position'] = ma_crossover_strategy(data, [50, 150])
 
     # Calculate return from strategy positions
-    data['strategy'] = data['position'].shift(1) * data['return']
-    data['c_strategy'] = np.exp(data['strategy'].cumsum())
+    data['strategy_log_return'] = data['position'].shift(1) * data['log_return']
+    data['cum_strategy'] = np.exp(data['strategy_log_return'].cumsum())
 
-    # Performance metrics
     data_interval = data.index.diff().median()          # Takes the median than any absolute for reliability
     annual_periods = pd.Timedelta(days=365.25) / data_interval  # Infers number of periods over the year from the data, for mu and stdev
 
-    ann_mean_log = data[['return', 'strategy']].mean() * annual_periods     # Return is log return, and annual periods is inferred from index
+    ann_mean_log = data[['log_return', 'strategy_log_return']].mean() * annual_periods     # Return is log return, and annual periods is inferred from index
     ann_mean = np.exp(ann_mean_log) - 1
     ann_mean.name = 'Annualised Mean'
 
-    ann_std = data[['return', 'strategy']].std() * np.sqrt(annual_periods)
+    ann_std = data[['log_return', 'strategy_log_return']].std() * np.sqrt(annual_periods)
     ann_std.name = 'Annualised StDev'
 
     sharpe = ann_mean / ann_std
@@ -44,12 +43,12 @@ def backtester():
     commission = 0.1 / 100 
     log_commission_multiplier = np.log(1 - commission)        # To multiply (add in log space) strategy returns with to get net return per trade after fees 
     data['trade'] = data['position'].diff().fillna(0).abs()         # 1 in every entry where a trade took place
-    data['strategy_net'] = data['strategy'] + data['trade'] * log_commission_multiplier
-    data['c_strategy_net'] = np.exp(data['strategy_net'].cumsum())
+    data['strategy_log_net'] = data['strategy_log_return'] + data['trade'] * log_commission_multiplier
+    data['cum_strategy_net'] = np.exp(data['strategy_log_net'].cumsum())
 
     # Plot results
     fig, ax = plt.subplots(figsize=(12,8))
-    data[['c_return', 'c_strategy', 'c_strategy_net']].plot(ax=ax)
+    data[['cum_return', 'cum_strategy', 'cum_strategy_net']].plot(ax=ax)
     ax = overlay_trades(data, ax)
     ax.legend(['Buy and Hold', 'Your Strategy', 'Your strategy (with fees)'])
     ax.set_title('Strategy Backtest Performance')

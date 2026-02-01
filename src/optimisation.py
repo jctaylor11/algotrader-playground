@@ -50,9 +50,9 @@ def _strategy_iterator(df, strategy, params_list):
     df['position'] = strategy(df, params_list)
 
     # Calculate the strategy returns with those parameters
-    df['return'] = np.log(df['close'].div(df['close'].shift(1)))
-    df['strategy_returns'] = df['position'].shift(1)* df['return']
-    df['cum_strategy'] = np.exp(df['strategy_returns'].cumsum())
+    df['log_return'] = np.log(df['close'].div(df['close'].shift(1)))
+    df['strategy_log_return'] = df['position'].shift(1)* df['log_return']
+    df['cum_strategy'] = np.exp(df['strategy_log_return'].cumsum())
 
     # Return the chosen performance indicator - currently the Multiple to start basic
     return float(df['cum_strategy'].iloc[-1])
