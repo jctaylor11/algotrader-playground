@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 from src.visualisation.plot_trades import plot_trades, overlay_trades
 
 
-def ma_crossover_strategy(close, params):
-    # So it doesn't interfere with original data passed in
-    close = close.copy()               
+def ma_crossover_strategy(data, params):
+    # So it doesn't interfere with original data passed in  
+    close = data['close'].copy()           
 
     # Setting ma strategy parameters
     MA_S = params[0]
