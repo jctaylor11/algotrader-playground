@@ -34,7 +34,6 @@ def grid_search_optimal_params(results) -> dict:
     # Packaging it up as a dict to return
     optimal_params_dict = optimal_params.to_dict()
 
-    print(results)
     print("\n-- Optimal Strategy Params --")
     final_keys = optimal_params_dict.keys()
     for key in final_keys:

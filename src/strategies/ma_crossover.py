@@ -27,10 +27,10 @@ def ma_crossover_strategy(data, params):
     position = pd.Series(0, index=close.index)   # Initialise all positions to 0 with same index as close
     position[condition] = 1 
 
-    fig, ax = plot_trades(close, [ma_s, ma_l])
-    ax.set_title('Moving Average Strategy Visualisation')
-    ax = overlay_trades(position, ax)       
+    # fig, ax = plot_trades(close, [ma_s, ma_l])
+    # ax.set_title('Moving Average Strategy Visualisation')
+    # ax = overlay_trades(position, ax)       
 
-    plt.show()
+    # plt.show()
 
     return position

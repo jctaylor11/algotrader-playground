@@ -5,6 +5,7 @@ import pandas as pd
 from src.reporting.performance_metrics import get_performance_metrics
 from src.visualisation.plot_trades import overlay_trades
 from src.backtest.fees import apply_trading_commissions
+from src.analysis.optimisation import grid_search_strategy, grid_search_optimal_params
 
 
 class Backtester():
@@ -12,16 +13,21 @@ class Backtester():
         self.filepath = filepath
         self.start = start
         self.end = end
-        self.get_data()
-        self.results = None
-        self.commission = 0.1 / 100     # Hard-coded for now
         self.strategy_function = strategy_function
         self.strategy_params = strategy_params
-    
+
+        self.raw_data = self.get_data()
+        self.results = None
+        self.commission = 0.1 / 100     # Hard-coded for now
+
     def get_data(self):
         data = pd.read_csv(self.filepath, parse_dates=['date'], index_col='date')
         data = data.loc[self.start:self.end].copy()
-        self.raw_data = data    
+        return data
+
+    def optimise_strategy_params(self, optimisation_params): 
+        parameter_grid = grid_search_strategy(self.raw_data, self.strategy_function, optimisation_params)
+        optimal_strategy_params = grid_search_optimal_params(parameter_grid)
 
     def run_strategy_backtest(self):
         data = self.raw_data.copy() 
