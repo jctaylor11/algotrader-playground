@@ -1,7 +1,7 @@
 import pandas as pd
 
 from src.strategies.ma_crossover import ma_crossover_strategy
-from src.optimisation import grid_search_strategy, grid_search_optimal_params
+from src.analysis.optimisation import grid_search_strategy, grid_search_optimal_params
 
 # Load data
 df = pd.read_csv("data/raw_ohlcv/BTCUSDT-1h-2017-08-17.csv", parse_dates=['date'], index_col='date')

@@ -9,7 +9,7 @@ from src.analysis.optimisation import grid_search_strategy, grid_search_optimal_
 
 
 class Backtester():
-    def __init__(self, filepath, start, end, strategy_function, strategy_params):
+    def __init__(self, filepath, start, end, strategy_function, strategy_params: dict):
         self.filepath = filepath
         self.start = start
         self.end = end
@@ -28,6 +28,7 @@ class Backtester():
     def optimise_strategy_params(self, optimisation_params): 
         parameter_grid = grid_search_strategy(self.raw_data, self.strategy_function, optimisation_params)
         optimal_strategy_params = grid_search_optimal_params(parameter_grid)
+        return optimal_strategy_params
 
     def run_strategy_backtest(self):
         data = self.raw_data.copy() 
