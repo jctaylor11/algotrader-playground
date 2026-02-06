@@ -73,6 +73,7 @@ def save_binance_ohlcv(symbol, interval, start=None):
     df_to_save.to_csv(f"data/raw_ohlcv/{symbol}-{interval}-{original_start}.csv", index=True)
 
 
-save_binance_ohlcv('BTCUSDT', '1h')
+if __name__ == "__main__":
+    save_binance_ohlcv('BTCUSDT', '1h')
 
 
