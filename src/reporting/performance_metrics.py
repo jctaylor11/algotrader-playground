@@ -4,45 +4,50 @@ import numpy as np
 
 def get_performance_metrics(data):
     data = data.copy()
+
+    cagr = _calculate_cagr(data)
+    ann_std = _calculate_ann_std(data)
+    sharpe = _calculate_sharpe_ratio(cagr, ann_std)
+
+    performance_results = pd.concat([cagr, ann_std, sharpe], axis=1)
+
+    return performance_results
+
+
+def _calculate_cagr(data):
+    """Takes log data, returns a series cagr for each log column"""
+    log_return_cols = ['log_return', 'strategy_log_return', 'strategy_log_net']
+    data[log_return_cols] = data[log_return_cols].fillna(0)
+
+    start_value = np.exp(data[log_return_cols].cumsum().iloc[0])   
+    end_value = np.exp(data[log_return_cols].cumsum().iloc[-1])  
+    multiple = end_value / start_value
+
+    # cagr = (ending value / starting value) ** (1 / number of years) - 1
+    start_date = data.index[0]
+    end_date = data.index[-1]
+    num_years = (end_date - start_date).days / 365.25
+
+    cagr = (multiple ** (1 / num_years) - 1)
+    cagr.name = 'CAGR'
+    cagr.index = ['Buy & Hold', 'Strategy', 'Strategy Net']
+
+    return cagr
+
+
+def _calculate_ann_std(data):
+    """Takes log data, returns a series containing results for each log column"""
+    # Using the data interval to calculate number of periods in the year, to annualise stdev
     data_interval = data.index.diff().median()          # Takes the median than any absolute for reliability
-    annual_periods = pd.Timedelta(days=365.25) / data_interval  # Infers number of periods over the year from the data, for mu and stdev
+    trading_periods_per_year = pd.Timedelta(days=365.25) / data_interval
 
-    ann_mean = _calculate_ann_mean(data, annual_periods)
-    ann_std = _calculate_ann_std(data, annual_periods)
-
-    sharpe = _calculate_sharpe_ratio(ann_mean, ann_std)
-
-    performance = pd.concat([ann_mean, ann_std, sharpe], axis=1)
-
-    return performance
-
-
-def _calculate_ann_mean(data, annual_periods):
-    """Takes log data, returns a series containing results for each log column"""
-    ann_mean_log = data[['log_return', 'strategy_log_return', 'strategy_log_net']].mean() * annual_periods     # Return is log return, and annual periods is inferred from index
-    ann_mean = np.exp(ann_mean_log) - 1
-
-    ## Alternate Method: ann_mean = ((1 + cum_return) ^ (annual_periods / duration)) - 1
-    # cum_log_return = data[['log_return', 'strategy_log_return', 'strategy_log_net']].sum()
-    # cum_return = np.exp(cum_log_return) - 1 
-    # ann_mean = (1 + cum_return) ** (annual_periods / len(data)) - 1
-    # ann_mean.name = 'Annualised Mean'
-
-    ann_mean.name = 'Annualised Mean'
-    ann_mean.index = ['Buy & Hold', 'Strategy', 'Strategy Net']
-
-    return ann_mean
-
-
-def _calculate_ann_std(data, annual_periods):
-    """Takes log data, returns a series containing results for each log column"""
-    ann_std = data[['log_return', 'strategy_log_return', 'strategy_log_net']].std() * np.sqrt(annual_periods)
+    ann_std = data[['log_return', 'strategy_log_return', 'strategy_log_net']].std() * np.sqrt(trading_periods_per_year)
     ann_std.index = ['Buy & Hold', 'Strategy', 'Strategy Net']
-    ann_std.name = 'Annualised StDev'
+    ann_std.name = 'Annualised log StDev'
     return ann_std
 
 
-def _calculate_sharpe_ratio(annualised_mean, annualised_std):
-    sharpe = annualised_mean / annualised_std
+def _calculate_sharpe_ratio(cagr, annualised_std):
+    sharpe = cagr / annualised_std
     sharpe.name = 'Sharpe Ratio'
     return sharpe

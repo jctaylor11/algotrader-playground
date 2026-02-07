@@ -55,6 +55,12 @@ class Backtester():
             return
         
         performance_metrics = get_performance_metrics(self.results)
+
+        #Formatting performance before printing
+        performance_metrics['CAGR'] = performance_metrics['CAGR'].map("{:.2%}".format)
+        performance_metrics['Annualised log StDev'] = performance_metrics['Annualised log StDev'].map("{:.2f}".format)
+        performance_metrics['Sharpe Ratio'] = performance_metrics['Sharpe Ratio'].map("{:.2f}".format)
+
         print(performance_metrics)
 
     def plot_results(self):
