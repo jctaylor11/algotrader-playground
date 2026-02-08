@@ -15,18 +15,24 @@ def get_performance_metrics(data):
 
 
 def _calculate_cagr(data):
-    """Takes log data, returns a series cagr for each log column"""
+    """
+    Takes log data, returns a series cagr for each log column
+    
+    Assumes the first row is the starting point by setting the first row to zero (likely from NAs).
+    """
     log_return_cols = ['log_return', 'strategy_log_return', 'strategy_log_net']
-    data[log_return_cols] = data[log_return_cols].fillna(0)
+    data.loc[data.index[0], log_return_cols] = 0    # Setting the first row to 0 to remove na and ensure starting point
 
-    start_value = np.exp(data[log_return_cols].cumsum().iloc[0])   
+    start_value = np.exp(data[log_return_cols].cumsum().iloc[0])  
     end_value = np.exp(data[log_return_cols].cumsum().iloc[-1])  
     multiple = end_value / start_value
 
     # cagr = (ending value / starting value) ** (1 / number of years) - 1
     start_date = data.index[0]
     end_date = data.index[-1]
-    num_years = (end_date - start_date).days / 365.25
+    num_years = (end_date - start_date).days / 365.2
+
+    print(f"num_years: {num_years}")
 
     cagr = (multiple ** (1 / num_years) - 1)
     cagr.name = 'CAGR'
