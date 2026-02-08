@@ -32,8 +32,6 @@ def _calculate_cagr(data):
     end_date = data.index[-1]
     num_years = (end_date - start_date).days / 365.2
 
-    print(f"num_years: {num_years}")
-
     cagr = (multiple ** (1 / num_years) - 1)
     cagr.name = 'CAGR'
     cagr.index = ['Buy & Hold', 'Strategy', 'Strategy Net']

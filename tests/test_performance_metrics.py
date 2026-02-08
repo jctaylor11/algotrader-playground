@@ -1,45 +1,43 @@
-from src.reporting.performance_metrics import _calculate_ann_mean, _calculate_ann_std
-
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 
-# Starting with known simple daily returns to verify annualisation calculations
-simple_daily_return = 0.0001
-simple_strategy_daily_return = 0.00015
-
-# Generate known annual data
-annual_periods = 365
-dates = pd.date_range(start='2025-01-01', periods=annual_periods, freq='D')
-synthetic_data = pd.DataFrame({
-    'log_return': [np.log(1 + simple_daily_return)] * len(dates),
-    'strategy_log_return': [np.log(1 + simple_strategy_daily_return)] * len(dates),
-    'strategy_log_net': [np.log(1 + simple_strategy_daily_return)] * len(dates)
-}, index=dates)
-
-def test_annualised_mean(synthetic_data):
-    # Using known data to calculate annualised mean
-    ann_mean = _calculate_ann_mean(synthetic_data, annual_periods)
-    bh_ann_mean = ann_mean['Buy & Hold']
-    print(f"Buy & Hold annual mean: {bh_ann_mean:.5f}")
-
-    # Now verify correctnesss by seeing simple daily return matches simple daily return from function's independently caculated annualised      
-    calculated_simple_daily_return = (1 + bh_ann_mean) ** (1 / annual_periods) - 1
-    print(f"Expected simple daily return: {simple_daily_return:.5f}")
-    print(f"Calculated simple daily return: {calculated_simple_daily_return:.5f}")
-
-def test_annualised_std(synthetic_data):
-    # Using known data to calculate annualised std
-    ann_std = _calculate_ann_std(synthetic_data, annual_periods)
-    bh_ann_std = ann_std['Buy & Hold']
-    print(f"Buy & Hold annual std: {bh_ann_std:.5f}")
-
-    # Std should be 0 since all returns are identical
-    calculated_simple_daily_std = bh_ann_std / np.sqrt(annual_periods)
-    expected_simple_daily_std = 0.0
-    print(f"Expected simple daily std: {expected_simple_daily_std:.5f}")
-    print(f"Calculated simple daily std: {calculated_simple_daily_std:.5f}")
+from src.reporting.performance_metrics import _calculate_cagr
 
 
-if __name__ == "__main__":
-    test_annualised_mean(synthetic_data)
-    test_annualised_std(synthetic_data)
+# Using a helper function instead of fixture to allow parameters to be passed in cleanly
+def create_test_data(simple_returns, interval):
+    """
+    Creates an applicable Dataframe for performance metrics, given a list simple_returns passed in from the parametrisation
+    """
+    log_returns = np.log([1 + r for r in simple_returns])   # Changing simple to log once, for correct format with function
+
+    test_data = pd.DataFrame({
+        'date': pd.date_range(start='2020', periods=len(simple_returns), freq=interval),   # Not hard-coded to allow variable sample data
+        'log_return': log_returns,
+        'strategy_log_return': log_returns,
+        'strategy_log_net': log_returns
+    })
+    test_data.set_index('date', inplace=True)
+    return test_data
+
+
+# Argument names string sets the simple_returns and expected_cagr variables, and the simple_returns is passed directly into the fixture
+@pytest.mark.parametrize("simple_returns,expected_cagr,interval", [
+    ([np.nan, 0.03, 0.07, 0.05, 0.12, 0.01], 0.055, "YE"),
+    ([np.nan, 0.04, 0.06, 0.05, 0.06, 0.067], 0.055, "YE")
+])
+def test_cagr(simple_returns, expected_cagr, interval):
+    """
+    Tests CAGR function calculation using known values from Investopedia example.
+
+    Source: https://www.investopedia.com/terms/a/annualized-total-return.asp
+    """
+    # Arrange
+    test_data = create_test_data(simple_returns, interval)
+
+    #Act
+    cagr = _calculate_cagr(test_data)
+
+    # Assert
+    assert cagr['Buy & Hold'] == pytest.approx(expected_cagr, abs=0.001)  # Answer taken from Investpedia example, with 0.1% error
