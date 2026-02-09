@@ -54,7 +54,12 @@ def _calculate_ann_simple_std(data):
 
 
 def _calculate_ann_log_std(data):
-    """Takes log data, returns a series containing log stdev"""
+    """
+    Takes log data, returns a series containing log stdev.
+
+    log std is mathematically consistent with my usage of log returns, though simple std is more common for reporting. 
+    I have I therefore included functions for both simple and log std, for more explicit clarity, and options for mathematical consistency and reporting convention.
+    """
     data_interval = data.index.diff().median()         
     trading_periods_per_year = pd.Timedelta(days=365.25) / data_interval
 
@@ -66,7 +71,43 @@ def _calculate_ann_log_std(data):
     return ann_log_std
 
 
-def _calculate_sharpe_ratio(cagr, annualised_std):
+def _calculate_sharpe_ratio_2(cagr, annualised_std):
     sharpe = cagr / annualised_std
     sharpe.name = 'Sharpe Ratio'
     return sharpe
+
+def _calculate_sharpe_ratio(data, periodic_risk_free_rate=0.0, rf_nperiods=None, annualise=True):
+    """
+    Calculates the Sharpe Ratio for each strategy in the data.
+
+    Calculated using the return of the portfolio (minus risk free rate) divided by the (simple) annualised standard deviation.
+    rf_nperiods is the number of periods the risk free rate corresponds to. If None, it assumes the risk free rate is for the same frequency as the data.
+    Periods is in the same interval as the data. For example, for daily data and an annual risk free rate, rf_nperiods=365.25 (for 24-hour markets)
+
+    Approach regarding usage of simple returns and simple standard deviation is consistent with Quantstats approach.
+    Source: https://github.com/ranaroussi/quantstats/blob/main/quantstats/stats.py#l272 
+
+    """
+    # Standard convention is to use simple returns for Sharpe ratio calculation - which feels wrong, but is standard practice
+    simple_returns = np.exp(data[['log_return', 'strategy_log_return', 'strategy_log_net']]) - 1
+
+    if rf_nperiods is not None:
+        rf_rate_periodic = (1 + periodic_risk_free_rate) ** (1 / rf_nperiods) - 1
+    else:
+        rf_rate_periodic = periodic_risk_free_rate
+    
+    excess_simple_returns = simple_returns - rf_rate_periodic
+    mean_return = excess_simple_returns.mean()
+
+    sharpe = mean_return / excess_simple_returns.std(ddof=1)  # ddof=1 since data is sample rather than population
+
+    if annualise == True: 
+        data_frequency = data.index.diff().median()
+        num_periods_per_year = pd.Timedelta(days=365.25) / data_frequency
+
+        # Annualised - returns scale linearly but stdev scales by sqrt, hence annualisation multipler: num / sqrt(num) = sqrt(num)
+        sharpe = sharpe * np.sqrt(num_periods_per_year)
+
+    sharpe.name = 'Sharpe Ratio'
+    return sharpe
+

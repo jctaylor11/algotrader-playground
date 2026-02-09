@@ -20,6 +20,7 @@ $\text{CAGR} = \left( \frac{\text{Ending Equity}}{\text{Beginning Equity}} \righ
 
 **Volatility Calculations**
 - Includes both the simple and log standard deviation calculations. Simple standard deviation is the industry standard for reporting, however log standard deviation is important for mathematical consistnecy. I have intentionally disambiguated between when simple or log values have been used, for example distinguishing between using log returns or simple returns for calculating the sharpe ratio. It seems there is contradiction in resources, considering these metrics are marketing tools - for example, using simple returns is preferable since they are higher than log, where log stdev would be preferable since it's lower than simple. 
+- Sharpe ratio calculation follows the industry standard of using the ratio of the mean of simple returns and the simple standard deviation of returns. Sharpe ratio uses these simple (not log) metrics since it's a risk-adjusted return measure for a single period. Log returns are used everywhere else in the code base for time-series modelling (additivity and return symmetry)
 
 ## Misc Issues
 - Current performance is just guaged by multiple, particularly in optimisation - I should make this variable, such as passing an argument in to specifying which performance I want optimised on 
