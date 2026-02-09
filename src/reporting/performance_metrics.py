@@ -40,20 +40,30 @@ def _calculate_cagr(data):
 
 
 def _calculate_ann_simple_std(data):
-    """Takes log data, returns a series containing results for each log column"""
+    """Takes log data, returns a series containing simple stdev"""
     # Using the data interval to calculate number of periods in the year, to annualise stdev
     data_interval = data.index.diff().median()          # Takes the median than any absolute for reliability
     trading_periods_per_year = pd.Timedelta(days=365.25) / data_interval
-    print(f"trading_periods_per_year: {trading_periods_per_year}")
 
-    # # For log stdev - if wanted instead of simple stdev
-    # ann_log_std = data[['log_return', 'strategy_log_return', 'strategy_log_net']].std() * np.sqrt(trading_periods_per_year)
+    simple_returns = np.exp(data[['log_return', 'strategy_log_return', 'strategy_log_net']]) - 1
+    ann_std = simple_returns.std() * np.sqrt(trading_periods_per_year)      # Simple standard deviation annualised
 
-    # For simple stdev 
-    ann_std = np.exp(data[['log_return', 'strategy_log_return', 'strategy_log_net']]).std() * np.sqrt(trading_periods_per_year)
     ann_std.index = ['Buy & Hold', 'Strategy', 'Strategy Net']
     ann_std.name = 'Annualised StDev'
     return ann_std
+
+
+def _calculate_ann_log_std(data):
+    """Takes log data, returns a series containing log stdev"""
+    data_interval = data.index.diff().median()         
+    trading_periods_per_year = pd.Timedelta(days=365.25) / data_interval
+
+    # Standard deviation of log returns
+    ann_log_std = data[['log_return', 'strategy_log_return', 'strategy_log_net']].std() * np.sqrt(trading_periods_per_year)
+
+    ann_log_std.index = ['Buy & Hold', 'Strategy', 'Strategy Net']
+    ann_log_std.name = 'Annualised Log StDev'
+    return ann_log_std
 
 
 def _calculate_sharpe_ratio(cagr, annualised_std):

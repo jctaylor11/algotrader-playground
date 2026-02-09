@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.reporting.performance_metrics import _calculate_cagr, _calculate_ann_simple_std
+from src.reporting.performance_metrics import _calculate_ann_log_std, _calculate_cagr, _calculate_ann_simple_std
 
 
 # Using a helper function instead of fixture to allow parameters to be passed in cleanly
@@ -39,8 +39,6 @@ def test_cagr(simple_returns, expected_cagr, interval):
     #Act
     cagr = _calculate_cagr(test_data)
 
-    print(f"Calculated CAGR: {cagr['Buy & Hold']}, Expected CAGR: {expected_cagr}")
-
     # Assert
     assert cagr['Buy & Hold'] == pytest.approx(expected_cagr, abs=0.001)  # Answer taken from Investpedia example, with 0.1% error
 
@@ -58,6 +56,7 @@ def test_ann_simple_std(simple_returns, expected_ann_std, interval):
     #Act
     ann_std = _calculate_ann_simple_std(test_data)
 
+    print(f"expected_ann_std: {expected_ann_std}, calculated: {ann_std['Buy & Hold']}")
+
     # Assert
-    print(f"Calculated Ann Std: {ann_std['Buy & Hold']}, Expected Ann Std: {expected_ann_std}")
     assert ann_std['Buy & Hold'] == pytest.approx(expected_ann_std, abs=0.001)  # Answer taken from Investpedia example, with 0.1% error

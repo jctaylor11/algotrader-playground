@@ -18,6 +18,9 @@ $\text{CAGR} = \left( \frac{\text{Ending Equity}}{\text{Beginning Equity}} \righ
 - CAGR does not consider the volatility of trading, and assumes constant performance. 
 - CAGR assumes compounding once a year.
 
+**Volatility Calculations**
+- Includes both the simple and log standard deviation calculations. Simple standard deviation is the industry standard for reporting, however log standard deviation is important for mathematical consistnecy. I have intentionally disambiguated between when simple or log values have been used, for example distinguishing between using log returns or simple returns for calculating the sharpe ratio. It seems there is contradiction in resources, considering these metrics are marketing tools - for example, using simple returns is preferable since they are higher than log, where log stdev would be preferable since it's lower than simple. 
+
 ## Misc Issues
 - Current performance is just guaged by multiple, particularly in optimisation - I should make this variable, such as passing an argument in to specifying which performance I want optimised on 
 
