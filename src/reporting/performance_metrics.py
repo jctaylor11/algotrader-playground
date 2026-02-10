@@ -7,7 +7,7 @@ def get_performance_metrics(data):
 
     cagr = _calculate_cagr(data)
     ann_std = _calculate_ann_simple_std(data)
-    sharpe = _calculate_sharpe_ratio(cagr, ann_std)
+    sharpe = _calculate_sharpe_ratio(data)
 
     performance_results = pd.concat([cagr, ann_std, sharpe], axis=1)
 
@@ -45,11 +45,12 @@ def _calculate_ann_simple_std(data):
     data_interval = data.index.diff().median()          # Takes the median than any absolute for reliability
     trading_periods_per_year = pd.Timedelta(days=365.25) / data_interval
 
+
     simple_returns = np.exp(data[['log_return', 'strategy_log_return', 'strategy_log_net']]) - 1
     ann_std = simple_returns.std() * np.sqrt(trading_periods_per_year)      # Simple standard deviation annualised
 
     ann_std.index = ['Buy & Hold', 'Strategy', 'Strategy Net']
-    ann_std.name = 'Annualised StDev'
+    ann_std.name = 'Annualised Simple StDev'
     return ann_std
 
 
@@ -70,11 +71,6 @@ def _calculate_ann_log_std(data):
     ann_log_std.name = 'Annualised Log StDev'
     return ann_log_std
 
-
-def _calculate_sharpe_ratio_2(cagr, annualised_std):
-    sharpe = cagr / annualised_std
-    sharpe.name = 'Sharpe Ratio'
-    return sharpe
 
 def _calculate_sharpe_ratio(data, periodic_risk_free_rate=0.0, rf_nperiods=None, annualise=True):
     """
@@ -109,5 +105,7 @@ def _calculate_sharpe_ratio(data, periodic_risk_free_rate=0.0, rf_nperiods=None,
         sharpe = sharpe * np.sqrt(num_periods_per_year)
 
     sharpe.name = 'Sharpe Ratio'
+    sharpe.index = ['Buy & Hold', 'Strategy', 'Strategy Net']
+
     return sharpe
 
