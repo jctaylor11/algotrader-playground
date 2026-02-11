@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from tabulate import tabulate
 
 from src.reporting.performance_metrics import get_performance_metrics
 from src.visualisation.plot_trades import overlay_trades
@@ -25,9 +26,17 @@ class Backtester():
         data = data.loc[self.start:self.end].copy()
         return data
 
-    def optimise_strategy_params(self, optimisation_params): 
+    def optimise_strategy_params(self, optimisation_params, verbose=True): 
         parameter_grid = grid_search_strategy(self.raw_data, self.strategy_function, optimisation_params)
         optimal_strategy_params = grid_search_optimal_params(parameter_grid)
+
+        if verbose:
+            print("\nOptimal Strategy Params:")
+            final_keys = optimal_strategy_params.keys()
+            for key in final_keys:
+                print(f"    {key.upper()}: {optimal_strategy_params[key]}")
+            print("")
+
         return optimal_strategy_params
 
     def run_strategy_backtest(self):
@@ -62,7 +71,7 @@ class Backtester():
             else:
                 performance_metrics[col] = performance_metrics[col].map("{:.2f}".format)
 
-        print(performance_metrics)
+        print(tabulate(performance_metrics, headers='keys', tablefmt='pretty'))
 
     def plot_results(self):
         if self.results is None:
@@ -74,4 +83,5 @@ class Backtester():
         ax = overlay_trades(self.results['position'], ax)
         ax.legend(['Buy and Hold', 'Your Strategy', 'Your strategy (with fees)'])
         ax.set_title('Strategy Backtest Performance')
-        plt.show()
+        
+        return ax

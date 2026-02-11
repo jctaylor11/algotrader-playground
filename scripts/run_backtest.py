@@ -1,5 +1,8 @@
+import matplotlib.pyplot as plt
+
 from src.backtest.backtester_class import Backtester
 from src.strategies.ma_crossover import ma_crossover_strategy
+
 
 # Configure backtester
 filepath = 'data/raw_ohlcv/BTCUSDT-1h-2017-08-17.csv'
@@ -21,9 +24,9 @@ bot = Backtester(
 
 # Demo of using optimisation 
 optimal_strategy_params = bot.optimise_strategy_params(optimisation_params)
-print(f"OPTIMAL: {optimal_strategy_params}")
 bot.strategy_params = optimal_strategy_params       # Updates the objects attributes with the optimal params
 
 bot.run_strategy_backtest()
 bot.print_performance()
-bot.plot_results()
+ax = bot.plot_results() 
+plt.show()

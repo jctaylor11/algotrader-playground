@@ -45,12 +45,11 @@ def _calculate_ann_simple_std(data):
     data_interval = data.index.diff().median()          # Takes the median than any absolute for reliability
     trading_periods_per_year = pd.Timedelta(days=365.25) / data_interval
 
-
     simple_returns = np.exp(data[['log_return', 'strategy_log_return', 'strategy_log_net']]) - 1
     ann_std = simple_returns.std() * np.sqrt(trading_periods_per_year)      # Simple standard deviation annualised
 
     ann_std.index = ['Buy & Hold', 'Strategy', 'Strategy Net']
-    ann_std.name = 'Annualised Simple StDev'
+    ann_std.name = 'Ann StDev'
     return ann_std
 
 

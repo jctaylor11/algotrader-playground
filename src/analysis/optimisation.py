@@ -38,12 +38,6 @@ def grid_search_optimal_params(results) -> dict:
     # Packaging it up as a dict to return
     optimal_params_dict = optimal_params.to_dict()
 
-    print("\n-- Optimal Strategy Params --")
-    final_keys = optimal_params_dict.keys()
-    for key in final_keys:
-        print(f"{key.upper()}: {optimal_params_dict[key]}")
-    print("")
-
     # Cleaning is needed so that returned params_dict can be used directly as input to the strategy
     optimal_params_dict.pop('performance', None)
     for key, value in optimal_params_dict.items():
