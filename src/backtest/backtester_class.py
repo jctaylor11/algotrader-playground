@@ -67,11 +67,13 @@ class Backtester():
 
         for col in performance_metrics.columns:
             if col == 'CAGR':
-                performance_metrics[col] = performance_metrics[col].map("{:.2%}".format)
+                performance_metrics[col] = performance_metrics[col].map("{:.0%}".format)
             else:
                 performance_metrics[col] = performance_metrics[col].map("{:.2f}".format)
 
         print(tabulate(performance_metrics, headers='keys', tablefmt='pretty'))
+
+        return performance_metrics
 
     def plot_results(self):
         if self.results is None:
@@ -84,4 +86,4 @@ class Backtester():
         ax.legend(['Buy and Hold', 'Your Strategy', 'Your strategy (with fees)'])
         ax.set_title('Strategy Backtest Performance')
         
-        return ax
+        return fig, ax

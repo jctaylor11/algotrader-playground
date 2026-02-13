@@ -26,7 +26,8 @@ bot = Backtester(
 optimal_strategy_params = bot.optimise_strategy_params(optimisation_params)
 bot.strategy_params = optimal_strategy_params       # Updates the objects attributes with the optimal params
 
+# Demo of performing the backtest
 bot.run_strategy_backtest()
 bot.print_performance()
-ax = bot.plot_results() 
+fig, ax = bot.plot_results() 
 plt.show()
