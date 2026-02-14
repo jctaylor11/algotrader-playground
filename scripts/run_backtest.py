@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 
 from src.backtest.backtester_class import Backtester
 from src.strategies.ma_crossover import ma_crossover_strategy
+from src.visualisation.plot_trades import overlay_trades
 
 
 # Configure backtester
@@ -26,8 +27,9 @@ bot = Backtester(
 optimal_strategy_params = bot.optimise_strategy_params(optimisation_params)
 bot.strategy_params = optimal_strategy_params       # Updates the objects attributes with the optimal params
 
-# Demo of performing the backtest
+# Running the backtest and presenting results
 bot.run_strategy_backtest()
 bot.print_performance()
-fig, ax = bot.plot_results() 
+fig, ax = bot.plot_results()         
+ax = overlay_trades(bot.get_positions(), ax)    # Overlays the trades onto the plot, using the positions
 plt.show()

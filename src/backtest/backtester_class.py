@@ -74,6 +74,9 @@ class Backtester():
         print(tabulate(performance_metrics, headers='keys', tablefmt='pretty'))
 
         return performance_metrics
+    
+    def get_positions(self):
+        return self.results['position']
 
     def plot_results(self):
         if self.results is None:
@@ -82,7 +85,6 @@ class Backtester():
     
         fig, ax = plt.subplots(figsize=(12,8))
         self.results[['cum_return', 'cum_strategy', 'cum_strategy_net']].plot(ax=ax)
-        ax = overlay_trades(self.results['position'], ax)
         ax.legend(['Buy and Hold', 'Your Strategy', 'Your strategy (with fees)'])
         ax.set_title('Strategy Backtest Performance')
         
