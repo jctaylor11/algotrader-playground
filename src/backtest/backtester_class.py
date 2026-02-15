@@ -75,10 +75,13 @@ class Backtester():
 
         return performance_metrics
     
+    def get_results(self):
+        return self.results
+    
     def get_positions(self):
         return self.results['position']
 
-    def plot_results(self):
+    def plot_matplotlib(self):
         if self.results is None:
             print("No results yet - run 'run_strategy_backtest()' first")
             return
@@ -89,3 +92,4 @@ class Backtester():
         ax.set_title('Strategy Backtest Performance')
         
         return fig, ax
+    

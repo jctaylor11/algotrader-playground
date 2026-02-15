@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.graph_objects as go
 
 from src.backtest.backtester_class import Backtester
 from src.strategies.ma_crossover import ma_crossover_strategy
@@ -9,10 +10,11 @@ if 'clicked' not in st.session_state:
 
 # Callback function for button click event
 def click_button():
-    if strategy:
-        st.session_state.clicked = True
+    st.session_state.clicked = True
 
 st.title("Algotrader")
+
+st.divider()
 
 # List of strategies for the selectbox
 strategy_options = ['Strategy 1', 'Strategy 2']
@@ -33,6 +35,8 @@ if strategy == 'Strategy 1' or strategy == 'Strategy 2':        # For now only o
 
 st.button("Run strategy", on_click=click_button)
 
+st.divider()
+
 # Filepath hardcoded for now - TODO: Parameterise with function that downloads (and caches) the data for a chosen coin 
 filepath = 'data/raw_ohlcv/BTCUSDT-1h-2017-08-17.csv'
 
@@ -49,9 +53,39 @@ if st.session_state.clicked == True:
 
         # Runs the backtest and get results
         bot.run_strategy_backtest()
-        performance = bot.print_performance()
+        performance_table = bot.print_performance()
+        results = bot.get_results()
 
         # Show the performance
-        st.write(performance)
+        st.write(performance_table)
+
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(
+            x=results.index,
+            y=(results['cum_return']-1)*100,    # Converts multiplier to %
+            name='Benchmark (Buy & Hold)',
+            line=dict(color='blue', width=2)
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=results.index,
+            y=(results['cum_strategy']-1)*100,
+            name='Strategy',
+            line=dict(color='red', width=2, dash='dash')
+        ))
+
+        fig.update_layout(
+            height=500,
+            width=800,
+            xaxis=dict(title='Date'),
+            yaxis=dict(title='Performance', ticksuffix='%'),
+            hovermode='x unified',
+            legend=dict(x=0.02, y=1.01, bgcolor='rgba(255,255,255,0)'),    # Setting the last to 0 so it's transparent),
+            margin=dict(t=20)
+            )
+
+        st.plotly_chart(fig, use_container_width=False)
+    
     except Exception as e: 
         st.error(f"Error: {str(e)}. Check your inputs") 
