@@ -10,7 +10,7 @@ from src.analysis.optimisation import grid_search_strategy, grid_search_optimal_
 
 
 class Backtester():
-    def __init__(self, filepath, start, end, strategy_function, strategy_params: dict):
+    def __init__(self, filepath, start, end, strategy_function, strategy_params:dict=None):
         self.filepath = filepath
         self.start = start
         self.end = end
