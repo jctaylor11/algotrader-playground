@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 
 from src.backtest.backtester_class import Backtester
 from src.strategies.ma_crossover import ma_crossover_strategy
+from src.visualisation.plot_trades import overlay_trades_plotly
 
 # Initialise sessions states
 if 'run_strategy_clicked' not in st.session_state:   # For persistent button behaviour since buttons don't retain state
@@ -10,6 +11,9 @@ if 'run_strategy_clicked' not in st.session_state:   # For persistent button beh
 
 if 'optimal_params' not in st.session_state:
     st.session_state.optimal_params = None
+
+if 'overlay_trades' not in st.session_state:
+    st.session_state.overlay_trades = False
 
 # Callback function for button click event
 def click_run_strategy():
@@ -91,6 +95,8 @@ if st.session_state.run_strategy_clicked == True:
         # Show the performance
         st.write(performance_table)
 
+        overlay_trades = st.checkbox(label="Overlay trades on chart")
+
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(
@@ -116,8 +122,14 @@ if st.session_state.run_strategy_clicked == True:
             legend=dict(x=0.02, y=1.01, bgcolor='rgba(255,255,255,0)'),    # Setting the last to 0 so it's transparent),
             margin=dict(t=20)
             )
+        
+        if overlay_trades:
+            # fig = overlay_trades_plotly(results['position', fig])
+            with st.spinner('Processing trades'):
+                fig = overlay_trades_plotly(results['position'], fig)
 
         st.plotly_chart(fig, use_container_width=False)
+
     
     except Exception as e: 
         st.error(f"Error: {str(e)}. Check your inputs") 

@@ -30,7 +30,7 @@ def overlay_trades(position, ax):
     # Calculate trade events
     trade = position.diff()
 
-    # Use for drawing vertical lines
+    # Get the current y axis limits - for drawing vertical lines
     ymin, ymax = ax.get_ylim()        
 
     # For all buys
@@ -42,3 +42,19 @@ def overlay_trades(position, ax):
     ax.vlines(sell_times, ymin, ymax, color='red', linestyle='dashed')
 
     return ax
+
+
+def overlay_trades_plotly(position, fig):
+    position = position.copy()
+
+    trade = position.diff()
+    buy_times = trade[trade == 1].index
+    sell_times = trade[trade == -1].index
+
+    for buy_time in buy_times: 
+        fig.add_vline(x=buy_time, line_color="#7FFFD4", opacity=0.5)
+
+    for sell_time in sell_times:
+        fig.add_vline(x=sell_time, line_color="#FFB6C1", opacity=0.5)
+
+    return fig
