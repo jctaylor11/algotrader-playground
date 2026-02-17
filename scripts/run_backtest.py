@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 from src.backtest.backtester_class import Backtester
 from src.strategies.ma_crossover import ma_crossover_strategy
-from src.visualisation.plot_trades import overlay_trades
+from src.visualisation.results_plots import overlay_trades
 
 
 # Configure backtester

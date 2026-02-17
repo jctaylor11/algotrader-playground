@@ -1,8 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from src.visualisation.plot_trades import plot_trades, overlay_trades
-
 
 def ma_crossover_strategy(data, params:dict):
     # So it doesn't interfere with original data passed in  
@@ -26,11 +24,5 @@ def ma_crossover_strategy(data, params:dict):
     # Strategy implementation
     position = pd.Series(0, index=close.index)   # Initialise all positions to 0 with same index as close
     position[condition] = 1 
-
-    # fig, ax = plot_trades(close, [ma_s, ma_l])
-    # ax.set_title('Moving Average Strategy Visualisation')
-    # ax = overlay_trades(position, ax)       
-
-    # plt.show()
 
     return position

@@ -4,7 +4,7 @@ import pandas as pd
 from tabulate import tabulate
 
 from src.reporting.performance_metrics import get_performance_metrics
-from src.visualisation.plot_trades import overlay_trades
+from src.visualisation.results_plots import overlay_trades
 from src.backtest.fees import apply_trading_commissions
 from src.analysis.optimisation import grid_search_strategy, grid_search_optimal_params
 
