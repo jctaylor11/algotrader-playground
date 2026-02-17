@@ -1,5 +1,4 @@
 import streamlit as st
-import plotly.graph_objects as go
 
 from src.backtest.backtester_class import Backtester
 from src.strategies.ma_crossover import ma_crossover_strategy
@@ -13,9 +12,6 @@ if 'run_strategy_clicked' not in st.session_state:   # For persistent button beh
 if 'optimal_params' not in st.session_state:
     st.session_state.optimal_params = None
 
-if 'overlay_trades' not in st.session_state:
-    st.session_state.overlay_trades = False
-
 # Callback function for button click event
 def click_run_strategy():
     st.session_state.run_strategy_clicked = True
@@ -24,31 +20,35 @@ st.title("Algotrader")
 
 st.divider()
 
-# List of strategies for the selectbox
-strategy_options = ['Strategy 1', 'Strategy 2']
+# Dict that maps strategies to their corresponding component render function
+strategy_options_dict = {
+    "Strategy 1": render_ma_crossover_inputs,
+    "Strategy 2": render_ma_crossover_inputs        # Both strategy the same for now to focus on core modularity
+}
 
 # Input fields for object instantiation
 left_column, right_column = st.columns(2)
 start = left_column.date_input("Start date", value='2024-01-01')
 end = right_column.date_input("End date", value='2025-01-01')
-strategy = st.selectbox('Select strategy', strategy_options, index=None)
+strategy = st.selectbox('Select strategy', strategy_options_dict.keys(), index=None)
 
 # Filepath hardcoded for now - TODO: Parameterise with function that downloads (and caches) the data for a chosen coin 
 filepath = 'data/raw_ohlcv/BTCUSDT-1h-2017-08-17.csv'
 
-# Additional input required for selected strategy
-strategy_params = {}    # Outside the conditional for variable scope
-if strategy == 'Strategy 1' or strategy == 'Strategy 2':        # For now only one strategy, but keep selection logic
-    strategy_params = render_ma_crossover_inputs(filepath, start, end)
-
+# Display relevant UI components for selected strategy and retrieve params
+strategy_params = {}    # Initialised outside of conditional for variable scope
+if strategy in strategy_options_dict:
+    render_strategy_function = strategy_options_dict[strategy]                              # Retrieves relevant function from strategy_options_dict
+    strategy_params = render_strategy_function(filepath=filepath, start=start, end=end)     # Calls function to render component and receive params
 
 st.divider()
+
 st.button("Run strategy", on_click=click_run_strategy)
 
 # Once the button is clicked, the strategy backtest is run and results displayed
-if st.session_state.run_strategy_clicked == True:
+if st.session_state.run_strategy_clicked:
     try:
-        # Adding the strategy parmas as an attribute to the object
+        # Adding the strategy params as an attribute to the object
         bot = Backtester(
             filepath=filepath,
             start=start,
