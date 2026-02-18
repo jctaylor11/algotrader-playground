@@ -5,6 +5,18 @@ from src.strategies.ma_crossover import ma_crossover_strategy
 from src.visualisation.results_plots import build_results_plotly, overlay_trades_plotly
 from src.ui.components import render_ma_crossover_inputs
 
+# Configure strategy-selection related constants
+STRATEGY_MAPPING = {
+    "Strategy 1": {
+        "component": render_ma_crossover_inputs,
+        "function": ma_crossover_strategy
+    },
+    "Strategy 2": {
+        "component": render_ma_crossover_inputs,
+        "function": ma_crossover_strategy
+    }
+}
+
 # Initialise sessions states
 if 'run_strategy_clicked' not in st.session_state:   # For persistent button behaviour since buttons don't retain state
     st.session_state.run_strategy_clicked = False   
@@ -17,23 +29,10 @@ def click_run_strategy():
     st.session_state.run_strategy_clicked = True
 
 st.title("Algotrader")
-
 st.divider()
 
-# Dictionary dispatch pattern for strategy options to render input components
-strategy_component_mapping = {
-    "Strategy 1": render_ma_crossover_inputs,
-    "Strategy 2": render_ma_crossover_inputs        # Both same strategies as placeholders - change to other strategies when added
-}
-
-# Dictionary dispatch pattern for strategy options to retrieve respective strategy function
-strategy_function_mapping = {
-    "Strategy 1": ma_crossover_strategy,
-    "Strategy 2": ma_crossover_strategy             # Both same strategies as placeholders - change to other strategies when added
-}
-
-selected_strategy_function = None       # For variable scope
-strategy_options = list(strategy_component_mapping)
+selected_strategy_function = None   # For variable scope
+strategy_options = list(STRATEGY_MAPPING)
 
 # Input fields for object instantiation
 left_column, right_column = st.columns(2)
@@ -47,13 +46,13 @@ filepath = 'data/raw_ohlcv/BTCUSDT-1h-2017-08-17.csv'
 strategy_params = {}    # Initialised outside of conditional for variable scope
 if selected_strategy in strategy_options:
     # Retrieves the relevant function to render UI components for the selected strategy
-    render_strategy_function = strategy_component_mapping[selected_strategy]      
+    render_strategy_function = STRATEGY_MAPPING[selected_strategy]["component"]  
 
     # Calls function the function to render components and receive selected strategy parameters
     strategy_params = render_strategy_function(filepath=filepath, start=start, end=end)     
 
     # Retrieves the relevant stratgey function the the selected strategy
-    selected_strategy_function = strategy_function_mapping[selected_strategy]
+    selected_strategy_function = STRATEGY_MAPPING[selected_strategy]["function"]
 
 st.divider()
 
@@ -79,9 +78,9 @@ if st.session_state.run_strategy_clicked:
         # Show the performance
         st.write(performance_table)
 
-        overlay_trades = st.checkbox(label="Overlay trades on chart")
-
         fig = build_results_plotly(results)
+
+        overlay_trades = st.checkbox(label="Overlay trades on chart")
 
         if overlay_trades:
             with st.spinner('Processing trades'):
