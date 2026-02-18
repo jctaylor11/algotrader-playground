@@ -31,8 +31,9 @@ def click_run_strategy():
 st.title("Algotrader")
 st.divider()
 
-selected_strategy_function = None   # For variable scope
 strategy_options = list(STRATEGY_MAPPING)
+selected_strategy_function = None   # For variable scope
+
 
 # Input fields for object instantiation
 left_column, right_column = st.columns(2)
