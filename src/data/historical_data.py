@@ -6,14 +6,8 @@ import time
 from datetime import datetime
 import streamlit as st
 
-# Load Binance API keys from .env
-load_dotenv()
-api_key = os.getenv("API_KEY")
-api_secret = os.getenv("SECRET_KEY")
-
 # Initialise Binance client (API wrapper binance-python) 
-client = Client(api_key, api_secret, tld = "com")
-
+client = Client(tld = "com")
 
 @st.cache_data
 def fetch_custom_binance_ohlcv(symbol, interval, start, end):
