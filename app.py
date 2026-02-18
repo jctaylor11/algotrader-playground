@@ -20,26 +20,40 @@ st.title("Algotrader")
 
 st.divider()
 
-# Dict that maps strategies to their corresponding component render function
-strategy_options_dict = {
+# Dictionary dispatch pattern for strategy options to render input components
+strategy_component_mapping = {
     "Strategy 1": render_ma_crossover_inputs,
-    "Strategy 2": render_ma_crossover_inputs        # Both strategy the same for now to focus on core modularity
+    "Strategy 2": render_ma_crossover_inputs        # Both same strategies as placeholders - change to other strategies when added
 }
+
+# Dictionary dispatch pattern for strategy options to retrieve respective strategy function
+strategy_function_mapping = {
+    "Strategy 1": ma_crossover_strategy,
+    "Strategy 2": ma_crossover_strategy             # Both same strategies as placeholders - change to other strategies when added
+}
+
+selected_strategy_function = None       # For variable scope
+strategy_options = list(strategy_component_mapping)
 
 # Input fields for object instantiation
 left_column, right_column = st.columns(2)
 start = left_column.date_input("Start date", value='2024-01-01')
 end = right_column.date_input("End date", value='2025-01-01')
-strategy = st.selectbox('Select strategy', strategy_options_dict.keys(), index=None)
+selected_strategy = st.selectbox('Select strategy', strategy_options, index=None)
 
 # Filepath hardcoded for now - TODO: Parameterise with function that downloads (and caches) the data for a chosen coin 
 filepath = 'data/raw_ohlcv/BTCUSDT-1h-2017-08-17.csv'
 
-# Display relevant UI components for selected strategy and retrieve params
 strategy_params = {}    # Initialised outside of conditional for variable scope
-if strategy in strategy_options_dict:
-    render_strategy_function = strategy_options_dict[strategy]                              # Retrieves relevant function from strategy_options_dict
-    strategy_params = render_strategy_function(filepath=filepath, start=start, end=end)     # Calls function to render component and receive params
+if selected_strategy in strategy_options:
+    # Retrieves the relevant function to render UI components for the selected strategy
+    render_strategy_function = strategy_component_mapping[selected_strategy]      
+
+    # Calls function the function to render components and receive selected strategy parameters
+    strategy_params = render_strategy_function(filepath=filepath, start=start, end=end)     
+
+    # Retrieves the relevant stratgey function the the selected strategy
+    selected_strategy_function = strategy_function_mapping[selected_strategy]
 
 st.divider()
 
@@ -53,7 +67,7 @@ if st.session_state.run_strategy_clicked:
             filepath=filepath,
             start=start,
             end=end,
-            strategy_function=ma_crossover_strategy,
+            strategy_function=selected_strategy_function,       
             strategy_params=strategy_params
         )
 
