@@ -4,7 +4,7 @@ from src.backtest.backtester_class import Backtester
 from src.strategies.ma_crossover import ma_crossover_strategy
 
 
-def render_ma_crossover_inputs(filepath, start, end):   # TODO: Take previously downloaded and cached dataframe instead of filepath
+def render_ma_crossover_inputs(dataframe, start, end):   # TODO: Take previously downloaded and cached dataframe instead of filepath
     # Set inputs ranges and defaults
     ma_s_min = 5
     ma_s_max = 100
@@ -26,8 +26,8 @@ def render_ma_crossover_inputs(filepath, start, end):   # TODO: Take previously 
 
     # Optimisation section - update the session state with optimal params after found
     if st.button("Find optimal parameters"):    # This will update the optimal parameters - and if the exist, will change the display (separate block)
-        bot = Backtester.with_csv(
-            filepath=filepath,
+        bot = Backtester(
+            dataframe=dataframe,
             start=start,
             end=end,
             strategy_function=ma_crossover_strategy,

@@ -9,7 +9,7 @@ import streamlit as st
 # Initialise Binance client (API wrapper binance-python) 
 client = Client(tld = "com")
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def fetch_custom_binance_ohlcv(symbol, interval, start, end):
     """
     Fetches and cleans custom ohlcv data from Binance, as requested by user in Streamlit app.py.
