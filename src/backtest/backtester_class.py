@@ -9,9 +9,9 @@ from src.backtest.fees import apply_trading_commissions
 from src.analysis.optimisation import grid_search_strategy, grid_search_optimal_params
 
 
-class Backtester():
-    def __init__(self, filepath, start, end, strategy_function, strategy_params:dict=None):
-        self.filepath = filepath
+class Backtester:
+    def __init__(self, dataframe, start, end, strategy_function, strategy_params:dict=None):
+        self.input_df = dataframe
         self.start = start
         self.end = end
         self.strategy_function = strategy_function
@@ -21,9 +21,24 @@ class Backtester():
         self.results = None
         self.commission = 0.1 / 100     # Hard-coded for now
 
+    @classmethod
+    def with_csv(cls, filepath, start, end, strategy_function, strategy_params:dict=None):
+        dataframe = pd.read_csv(filepath, parse_dates=['date'], index_col='date')
+        return cls(dataframe, start, end, strategy_function, strategy_params)
+
     def get_data(self):
-        data = pd.read_csv(self.filepath, parse_dates=['date'], index_col='date')
-        data = data.loc[self.start:self.end].copy()
+        data = self.input_df.copy()
+        
+        # Validate correct format
+        if 'date' in data.columns:
+            data['date'] = pd.to_datetime(data["date"])
+            data = data.set_index('date')
+        elif data.index.name == 'date':
+            data.index = pd.to_datetime(data.index)
+        else:
+            raise ValueError("DateFrame must have a date column or 'date' as index name")
+            
+        data = data.loc[self.start:self.end]
         return data
 
     def optimise_strategy_params(self, optimisation_params, verbose=True): 

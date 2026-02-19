@@ -26,7 +26,7 @@ def render_ma_crossover_inputs(filepath, start, end):   # TODO: Take previously 
 
     # Optimisation section - update the session state with optimal params after found
     if st.button("Find optimal parameters"):    # This will update the optimal parameters - and if the exist, will change the display (separate block)
-        bot = Backtester(
+        bot = Backtester.with_csv(
             filepath=filepath,
             start=start,
             end=end,

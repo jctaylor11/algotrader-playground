@@ -27,3 +27,6 @@ $\text{CAGR} = \left( \frac{\text{Ending Equity}}{\text{Beginning Equity}} \righ
 
 ## Specific Design Choices
 - Strategy parameter argument must always be a dict to unamibiguously assign variable to the parameter name
+
+## Unit Testing
+- Need to add rigorous unit testing. Realised the value of seemingly trivial tests when it comes to refactoring, to check that the behaviour is still the same rather than something silently breaking and only arising when a small part of the code is run. The test should be primarily for after future changes, rather than to verify present functionality. 

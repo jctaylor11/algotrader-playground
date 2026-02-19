@@ -15,7 +15,7 @@ strategy_params = {'ma_s': 50, 'ma_l': 100}
 optimisation_params = {'ma_s': range(50, 100, 1), 'ma_l': range(100, 150, 1)}
 
 # Instantiate backtester from Backtester class
-bot = Backtester(
+bot = Backtester.with_csv(
     filepath=filepath, 
     start=start, 
     end=end, 
@@ -30,6 +30,6 @@ bot.strategy_params = optimal_strategy_params       # Updates the objects attrib
 # Running the backtest and presenting results
 bot.run_strategy_backtest()
 bot.print_performance()
-fig, ax = bot.plot_results()         
+fig, ax = bot.plot_matplotlib()         
 ax = overlay_trades(bot.get_positions(), ax)    # Overlays the trades onto the plot, using the positions
 plt.show()
