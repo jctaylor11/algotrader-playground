@@ -7,7 +7,7 @@ from src.ui.components import render_ma_crossover_inputs
 from src.data.historical_data import fetch_custom_binance_ohlcv
 
 def progress_cb(current_progress):
-    print(f"IN Funciton: {current_progress}")
+    print(f"Current progress: {current_progress}")
     if current_progress < 100:
         loading_bar.progress(current_progress)
     else:
