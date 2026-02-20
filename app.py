@@ -6,6 +6,13 @@ from src.visualisation.results_plots import build_results_plotly, overlay_trades
 from src.ui.components import render_ma_crossover_inputs
 from src.data.historical_data import fetch_custom_binance_ohlcv
 
+def progress_cb(current_progress):
+    print(f"IN Funciton: {current_progress}")
+    if current_progress < 100:
+        loading_bar.progress(current_progress)
+    else:
+        loading_bar.empty()
+
 
 # Configure constants
 AVAILABLE_PAIRS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT']
@@ -52,12 +59,15 @@ start = left_column.date_input("Start date", value='2024-01-01')
 end = right_column.date_input("End date", value='2025-01-01')
 
 if st.button("Load data"):
-    with st.spinner("Loading data", show_time=True):
-        st.session_state.custom_data = fetch_custom_binance_ohlcv(coin_pair, interval, str(start), str(end))
+    loading_bar = st.progress(0, "loading")
+
+    st.session_state.custom_data = fetch_custom_binance_ohlcv(coin_pair, interval, str(start), str(end), progress_cb)
+
+    # with st.spinner("Loading data", show_time=True):
+    #     st.session_state.custom_data = fetch_custom_binance_ohlcv(coin_pair, interval, str(start), str(end), progress)
 
 if st.session_state.custom_data is not None and not st.session_state.custom_data.empty:
     st.success("Loaded")
-
 
 st.divider()
 selected_strategy = st.selectbox('Select strategy', strategy_options, index=None)

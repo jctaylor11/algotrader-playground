@@ -5,17 +5,18 @@ import pandas as pd
 import time
 from datetime import datetime
 import streamlit as st
+import math
 
 # Initialise Binance client (API wrapper binance-python) 
 client = Client(tld = "com")
 
-@st.cache_data(show_spinner=False)
-def fetch_custom_binance_ohlcv(symbol, interval, start, end):
+
+def fetch_custom_binance_ohlcv(symbol, interval, start, end, _progress_cb=None):
     """
     Fetches and cleans custom ohlcv data from Binance, as requested by user in Streamlit app.py.
     Return Pandas dataframe.
     """
-    custom_data = _fetch_binance_ohlcv(symbol, interval, start, end)
+    custom_data = _fetch_binance_ohlcv(symbol, interval, start, end, _progress_cb)
 
     custom_data = _clean_ohlcv_data(custom_data) 
 
@@ -43,14 +44,23 @@ def save_binance_ohlcv(symbol, interval, start=None, end=None):
     return filepath
 
 
-def _fetch_binance_ohlcv(symbol, interval, start, end):
+def _fetch_binance_ohlcv(symbol, interval, start, end, progress_cb=None):
     latest_timestamp = None
     end_timestamp = pd.Timestamp(end) if end else None  
     data_batches = []
+    batch_count = 0
+    total_batches = math.ceil((pd.Timestamp(end) - pd.Timestamp(start)) / pd.Timedelta(interval) / 1000)
     while True: 
         print(f"Pulling batch: {start}")
 
         data_batch = _fetch_binance_ohlcv_batch(symbol, interval, start)
+
+        batch_count += 1
+    
+        if progress_cb:
+            current_progress = int((batch_count / total_batches) * 100)
+            print(f"CURRENT P: {current_progress}")
+            progress_cb(current_progress)
 
         if data_batch.empty or latest_timestamp == data_batch.index.max():          # Second condition prevents infinite loop at boundary
             break               # Pulled all data up to today's date
@@ -107,6 +117,16 @@ def _clean_ohlcv_data(df):
     return df
 
 
+# Required since Streamlit-decorated functions will break if called from outside of Streamlit
+# This will decorate the function only if running in Streamlit context
+# Inner function (_fetch_binance_ohlcv) cached instead of outer (fetch_custom_binance_ohlcv) due to callback function compatibility with st.cache_data
+try:
+    _fetch_binance_ohlcv_batch = st.cache_data(show_spinner=False)(_fetch_binance_ohlcv_batch)
+except RuntimeError:
+    pass
+
+
+# For testing
 if __name__ == "__main__":
     # filepath = save_binance_ohlcv('BTCUSDT', '4h', start="2025-01-01", end="2025-05-05")
     # print(filepath)
