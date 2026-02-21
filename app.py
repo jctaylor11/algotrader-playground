@@ -1,10 +1,10 @@
 import streamlit as st
 
 from src.backtest.backtester_class import Backtester
-from src.strategies.ma_crossover import ma_crossover_strategy
-from src.visualisation.results_plots import build_results_plotly, overlay_trades_plotly
-from src.ui.components import render_ma_crossover_inputs
 from src.data.historical_data import fetch_custom_binance_ohlcv
+from src.strategies.ma_crossover import ma_crossover_strategy
+from src.ui.components import render_ma_crossover_inputs
+from src.visualisation.results_plots import build_results_plotly, overlay_trades_plotly
 
 def progress_cb(current_progress):
     print(f"Current progress: {current_progress}")
@@ -14,7 +14,18 @@ def progress_cb(current_progress):
         loading_bar.empty()
 
 
-# Configure constants
+## Configuration ## 
+st.set_page_config(page_title="Algotrader", layout="wide")
+
+## Session state initialisation ##
+if 'custom_data' not in st.session_state:
+    st.session_state.custom_data = None
+if 'optimal_params' not in st.session_state:
+    st.session_state.optimal_params = None
+if 'run_strategy_clicked' not in st.session_state:   # Since buttons don't retain state
+    st.session_state.run_strategy_clicked = False  
+
+## Constants ##
 AVAILABLE_PAIRS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT']
 
 AVAILABLE_INTERVALS = ['1w', '1d', '4h', '1h']
@@ -30,95 +41,89 @@ STRATEGY_MAPPING = {
     }
 }
 
-# Initialise sessions states
-if 'run_strategy_clicked' not in st.session_state:   # For persistent button behaviour since buttons don't retain state
-    st.session_state.run_strategy_clicked = False   
+## Side bar inputs ## 
+with st.sidebar:
+    st.header("Data Input")
 
-if 'optimal_params' not in st.session_state:
-    st.session_state.optimal_params = None
+    coin_pair = st.selectbox("Pair", options=AVAILABLE_PAIRS)
+    interval = st.selectbox("Interval", options=AVAILABLE_INTERVALS, index=1)
+    start = st.date_input("Start", "2024-01-01")
+    end = st.date_input("End", "2025-01-01")
 
-if 'custom_data' not in st.session_state:
-    st.session_state.custom_data = None
+    if st.button("Load Data", use_container_width=True):
+        loading_bar = st.progress(0, "Loading")
+        st.session_state.custom_data = fetch_custom_binance_ohlcv(coin_pair, interval, str(start), str(end), progress_cb)
 
-# Callback function for button click event
-def click_run_strategy():
-    st.session_state.run_strategy_clicked = True
+    if st.session_state.custom_data is not None: 
+        st.success(f"Loaded {coin_pair}")
+    
 
+## Main area ##
 st.title("Algotrader")
-st.divider()
 
-strategy_options = list(STRATEGY_MAPPING)
-selected_strategy_function = None   # For variable scope
+if st.session_state.custom_data is not None:
+    st.subheader("Strategy")
 
-# Input fields for object instantiation
-left_column, right_column = st.columns(2)
-coin_pair = left_column.selectbox('Pair', AVAILABLE_PAIRS)
-interval = right_column.selectbox('Interval', AVAILABLE_INTERVALS, index=1)
-left_column, right_column = st.columns(2)
-start = left_column.date_input("Start date", value='2024-01-01')
-end = right_column.date_input("End date", value='2025-01-01')
+    with st.container(border=True):
 
-if st.button("Load data"):
-    loading_bar = st.progress(0, "loading")
+        strategy_options = list(STRATEGY_MAPPING)
+        selected_strategy = st.selectbox(label="Select Strategy", options=strategy_options, index=None)
 
-    st.session_state.custom_data = fetch_custom_binance_ohlcv(coin_pair, interval, str(start), str(end), progress_cb)
+        strategy_params = {}    # Initialised outside of conditional for variable scope
+        if selected_strategy in strategy_options:
+            # Retrieves selected strategy's function to render UI components 
+            render_strategy_function = STRATEGY_MAPPING[selected_strategy]["component"]  
 
-    # with st.spinner("Loading data", show_time=True):
-    #     st.session_state.custom_data = fetch_custom_binance_ohlcv(coin_pair, interval, str(start), str(end), progress)
+            # Renders strategy's UI components and receives selected parameters
+            strategy_params = render_strategy_function(dataframe=st.session_state.custom_data, start=start, end=end)     
 
-if st.session_state.custom_data is not None and not st.session_state.custom_data.empty:
-    st.success("Loaded")
+            # Retrieves selected stratgey's logic function
+            selected_strategy_function = STRATEGY_MAPPING[selected_strategy]["function"]
 
-st.divider()
-selected_strategy = st.selectbox('Select strategy', strategy_options, index=None)
+    if selected_strategy and st.button("Run Backtest"):
+            st.session_state.run_strategy_clicked = True
 
-# Filepath hardcoded for now - TODO: Parameterise with function that downloads (and caches) the data for a chosen coin 
-# filepath = 'data/raw_ohlcv/BTCUSDT-1h-2017-08-17.csv'
+else:
+    # st.markdown("""
+    # 1. Select and load data in the sidebar
+    # 2. Choose a strategy and set its parameters
+    # 3. Optimise strategy parameters (optional)
+    # 4. Run backtest with the selected strategy and data
+    # """)
+    st.info("Select and load data from the sidebar to begin")
 
-strategy_params = {}    # Initialised outside of conditional for variable scope
-if selected_strategy in strategy_options:
-    # Retrieves the relevant function to render UI components for the selected strategy
-    render_strategy_function = STRATEGY_MAPPING[selected_strategy]["component"]  
-
-    # Calls function the function to render components and receive selected strategy parameters
-    strategy_params = render_strategy_function(dataframe=st.session_state.custom_data, start=start, end=end)     
-
-    # Retrieves the relevant stratgey function the the selected strategy
-    selected_strategy_function = STRATEGY_MAPPING[selected_strategy]["function"]
-
-st.divider()
-
-st.button("Run strategy", on_click=click_run_strategy)
-
-# Once the button is clicked, the strategy backtest is run and results displayed
 if st.session_state.run_strategy_clicked:
-    try:
-        # Adding the strategy params as an attribute to the object
-        bot = Backtester(
-            dataframe=st.session_state.custom_data,
-            start=start,
-            end=end,
-            strategy_function=selected_strategy_function,       
-            strategy_params=strategy_params
-        )
+    st.subheader("Performance")
 
-        # Runs the backtest and get results
-        bot.run_strategy_backtest()
-        performance_table = bot.print_performance()
-        results = bot.get_results()
+    with st.container():
+        try:
+            # Adding the strategy params as an attribute to the object
+            bot = Backtester(
+                dataframe=st.session_state.custom_data,
+                start=start,
+                end=end,
+                strategy_function=selected_strategy_function,       
+                strategy_params=strategy_params
+            )
 
-        # Show the performance
-        st.write(performance_table)
+            # Runs the backtest and get results
+            bot.run_strategy_backtest()
+            performance_table = bot.print_performance()
+            results = bot.get_results()
 
-        fig = build_results_plotly(results)
+            # Show the performance
+            st.write(performance_table)
 
-        overlay_trades = st.checkbox(label="Overlay trades on chart")
+            fig = build_results_plotly(results)
 
-        if overlay_trades:
-            with st.spinner('Processing trades'):
-                fig = overlay_trades_plotly(results['position'], fig)
+            overlay_trades = st.checkbox(label="Overlay trades on chart")
 
-        st.plotly_chart(fig, use_container_width=False)
+            if overlay_trades:
+                with st.spinner('Processing trades'):
+                    fig = overlay_trades_plotly(results['position'], fig)
 
-    except Exception as e: 
-        st.error(f"Error: {str(e)}. Check your inputs") 
+            st.plotly_chart(fig, use_container_width=True)
+
+        except Exception as e: 
+            st.error(f"Error: {str(e)}. Check your inputs") 
+

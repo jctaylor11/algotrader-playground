@@ -19,13 +19,13 @@ def render_ma_crossover_inputs(dataframe, start, end):   # TODO: Take previously
     ma_l_set = optimal_params["ma_l"] if optimal_params is not None else ma_l_default
 
     # Set the sliders and update strategy params 
-    ma_s = st.slider("MA_S", ma_s_min, ma_s_max, value=ma_s_set)
-    ma_l = st.slider("MA_L", ma_l_min, ma_l_max, value=ma_l_set)
+    col_1, col_2 = st.columns(2)
+    ma_s = col_1.slider("Short-window MA", ma_s_min, ma_s_max, value=ma_s_set)
+    ma_l = col_2.slider("Long-window MA", ma_l_min, ma_l_max, value=ma_l_set)
     strategy_params = {'ma_s': ma_s, 'ma_l': ma_l}
 
-
     # Optimisation section - update the session state with optimal params after found
-    if st.button("Find optimal parameters"):    # This will update the optimal parameters - and if the exist, will change the display (separate block)
+    if st.button("(Optional) Find Optimal Parameters"):    # This will update the optimal parameters - and if the exist, will change the display (separate block)
         bot = Backtester(
             dataframe=dataframe,
             start=start,
@@ -39,6 +39,6 @@ def render_ma_crossover_inputs(dataframe, start, end):   # TODO: Take previously
         st.rerun()
 
     if st.session_state.optimal_params:
-        st.success(f"Optimal strategy parameters in sample are {optimal_params['ma_s']} and {optimal_params['ma_l']}")
+        st.success(f"Optimal strategy parameters for this sample are {optimal_params['ma_s']} and {optimal_params['ma_l']}")
     
     return strategy_params
