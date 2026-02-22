@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 
 from src.backtest.backtester_class import Backtester
 from src.data.historical_data import fetch_custom_binance_ohlcv
@@ -46,17 +47,38 @@ with st.sidebar:
     st.header("Data Input")
 
     coin_pair = st.selectbox("Pair", options=AVAILABLE_PAIRS)
-    interval = st.selectbox("Interval", options=AVAILABLE_INTERVALS, index=1)
+    interval = st.selectbox("Interval", options=AVAILABLE_INTERVALS, index=3)
     start = st.date_input("Start", "2024-01-01")
     end = st.date_input("End", "2025-01-01")
 
     if st.button("Load Data", use_container_width=True):
-        loading_bar = st.progress(0, "Loading")
-        st.session_state.custom_data = fetch_custom_binance_ohlcv(coin_pair, interval, str(start), str(end), progress_cb)
+        if start > end: 
+            st.Error("Start must be before end")
+        else:
+            loading_bar = st.progress(0, "Loading")
+            try:
+                custom_data = fetch_custom_binance_ohlcv(coin_pair, interval, str(start), str(end), progress_cb)
+
+                if custom_data is not None and not custom_data.empty: 
+                    st.session_state.custom_data = custom_data
+                    st.session_state.custom_data_info = {
+                        "Pair": coin_pair,
+                        "Interval": interval,
+                        "Start": start,
+                        "End": end,
+                        "Rows": len(custom_data)
+                    }
+                else:
+                    st.error("No data found")
+            except Exception as e:
+                st.error(f"Failed to load data: {str(e)}")
+
 
     if st.session_state.custom_data is not None: 
-        st.success(f"Loaded {coin_pair}")
-    
+        st.success(f"Loaded")
+
+        custom_data_info = pd.Series(st.session_state.custom_data_info, name="Loaded Data")
+        st.dataframe(custom_data_info)
 
 ## Main area ##
 st.title("Algotrader")
@@ -84,12 +106,6 @@ if st.session_state.custom_data is not None:
             st.session_state.run_strategy_clicked = True
 
 else:
-    # st.markdown("""
-    # 1. Select and load data in the sidebar
-    # 2. Choose a strategy and set its parameters
-    # 3. Optimise strategy parameters (optional)
-    # 4. Run backtest with the selected strategy and data
-    # """)
     st.info("Select and load data from the sidebar to begin")
 
 if st.session_state.run_strategy_clicked:
