@@ -51,7 +51,7 @@ with st.sidebar:
     start = st.date_input("Start", "2024-01-01")
     end = st.date_input("End", "2025-01-01")
 
-    if st.button("Load Data", use_container_width=True):
+    if st.button("Load Data", width="stretch"):
         if start > end: 
             st.Error("Start must be before end")
         else:
@@ -102,7 +102,7 @@ if st.session_state.custom_data is not None:
             # Retrieves selected stratgey's logic function
             selected_strategy_function = STRATEGY_MAPPING[selected_strategy]["function"]
 
-    if selected_strategy and st.button("Run Backtest"):
+    if selected_strategy and st.button("Run Backtest", type="primary", width="stretch"):
             st.session_state.run_strategy_clicked = True
 
 else:
@@ -140,10 +140,10 @@ if st.session_state.run_strategy_clicked:
             overlay_trades = st.checkbox(label="Overlay trades on chart")
 
             if overlay_trades:
-                with st.spinner('Processing trades'):
+                with st.spinner('Processing trades', show_time=True):
                     fig = overlay_trades_plotly(results['position'], fig)
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             # Show the performance
             st.dataframe(performance_table)
