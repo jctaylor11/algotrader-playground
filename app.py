@@ -7,13 +7,13 @@ from src.strategies.ma_crossover import ma_crossover_strategy
 from src.ui.components import render_ma_crossover_inputs
 from src.visualisation.results_plots import build_results_plotly, overlay_trades_plotly
 
+
 def progress_cb(current_progress):
     print(f"Current progress: {current_progress}")
     if current_progress < 100:
         loading_bar.progress(current_progress)
     else:
         loading_bar.empty()
-
 
 ## Configuration ## 
 st.set_page_config(page_title="Algotrader", layout="wide")
@@ -109,6 +109,7 @@ else:
     st.info("Select and load data from the sidebar to begin")
 
 if st.session_state.run_strategy_clicked:
+    st.divider()
     st.subheader("Performance")
 
     with st.container():
@@ -126,9 +127,13 @@ if st.session_state.run_strategy_clicked:
             bot.run_strategy_backtest()
             performance_table = bot.print_performance()
             results = bot.get_results()
-
-            # Show the performance
-            st.write(performance_table)
+            
+            col_1, col_2, col_3, col_4 = st.columns(4)
+            col_1.metric("CAGR", performance_table.loc["Strategy Net", "CAGR"])
+            col_2.metric("Sharpe Ratio", performance_table.loc["Strategy Net", "Sharpe Ratio"])
+            col_3.metric("Benchmark CAGR", performance_table.loc["Buy & Hold", "CAGR"])
+            col_4.metric("Volatility", performance_table.loc["Strategy Net", "Ann StDev"])
+            st.divider()
 
             fig = build_results_plotly(results)
 
@@ -140,6 +145,10 @@ if st.session_state.run_strategy_clicked:
 
             st.plotly_chart(fig, use_container_width=True)
 
+            # Show the performance
+            st.dataframe(performance_table)
+
         except Exception as e: 
             st.error(f"Error: {str(e)}. Check your inputs") 
+
 
