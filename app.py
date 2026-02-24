@@ -64,9 +64,9 @@ with st.sidebar:
                     st.session_state.custom_data_info = {
                         "Pair": coin_pair,
                         "Interval": interval,
-                        "Start": start,
-                        "End": end,
-                        "Rows": len(custom_data)
+                        "Start": str(start),
+                        "End": str(end),
+                        "Rows": str(len(custom_data))   # All values are strings for compatibility with Streamlit's PyArrow
                     }
                 else:
                     st.error("No data found")
