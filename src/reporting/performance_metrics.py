@@ -17,7 +17,7 @@ def get_performance_metrics(data):
 def _calculate_cagr(data):
     """
     Takes log data, returns a series cagr for each log column
-    
+     
     Assumes the first row is the starting point by setting the first row to zero (likely from NAs).
     """
     log_return_cols = ['log_return', 'strategy_log_return', 'strategy_log_net']
