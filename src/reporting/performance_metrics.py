@@ -5,13 +5,28 @@ import numpy as np
 def get_performance_metrics(data):
     data = data.copy()
 
+    total_return = _calculate_total_return(data)
     cagr = _calculate_cagr(data)
     ann_std = _calculate_ann_simple_std(data)
     sharpe = _calculate_sharpe_ratio(data)
 
-    performance_results = pd.concat([cagr, ann_std, sharpe], axis=1)
+    performance_results = pd.concat([total_return, cagr, ann_std, sharpe], axis=1)
 
     return performance_results
+
+
+def _calculate_total_return(data):
+    log_return_cols = ['log_return', 'strategy_log_return', 'strategy_log_net']
+
+    cum_log_returns = data[log_return_cols].cumsum().iloc[-1]
+    total_return = np.exp(cum_log_returns) - 1     
+
+    total_return.name = 'Total Return'
+    total_return.index = ['Buy & Hold', 'Strategy', 'Strategy Net']
+
+    return total_return
+
+
 
 
 def _calculate_cagr(data):

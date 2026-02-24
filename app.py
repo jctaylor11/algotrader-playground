@@ -125,14 +125,46 @@ if st.session_state.run_strategy_clicked:
 
             # Runs the backtest and get results
             bot.run_strategy_backtest()
-            performance_table = bot.print_performance()
-            results = bot.get_results()
+            performance_metrics = bot.performance_metrics
+            results = bot.results
+
+            # Formatting the metrics for significant figures to display
+            for col in performance_metrics.columns:
+                if col in ('CAGR', 'Total Return'):
+                    performance_metrics[col] = performance_metrics[col].map("{:.0%}".format)
+                else:
+                    performance_metrics[col] = performance_metrics[col].map("{:.2f}".format)
+
+            # if (end - start).days > 400:
+            #     col_1, col_2, col_3, col_4, col_5 = st.columns(5)
+            #     col_1.metric("Total Return", performance_metrics.loc["Strategy Net", "Total Return"])
+            #     col_2.metric("Benchmark Return", performance_metrics.loc["Buy & Hold", "Total Return"])
+            #     col_3.metric("CAGR", performance_metrics.loc["Strategy Net", "CAGR"])
+            #     col_4.metric("Sharpe Ratio", performance_metrics.loc["Strategy Net", "Sharpe Ratio"])
+            #     col_5.metric("Volatility", performance_metrics.loc["Strategy Net", "Ann StDev"])
+            # else:
+            #     col_1, col_2, col_3, col_4 = st.columns(4)
+            #     col_1.metric("Total Return", performance_metrics.loc["Strategy Net", "Total Return"])
+            #     col_2.metric("Benchmark Return", performance_metrics.loc["Buy & Hold", "Total Return"])
+            #     col_3.metric("Sharpe Ratio", performance_metrics.loc["Strategy Net", "Sharpe Ratio"])
+            #     col_4.metric("Volatility", performance_metrics.loc["Strategy Net", "Ann StDev"])
+
+            metrics_to_display = [
+            ("Total Return",     performance_metrics.loc["Strategy Net", "Total Return"]),
+            ("Benchmark Return", performance_metrics.loc["Buy & Hold",   "Total Return"]),
+            ("Sharpe Ratio",     performance_metrics.loc["Strategy Net", "Sharpe Ratio"]),
+            ("Volatility",       performance_metrics.loc["Strategy Net", "Ann StDev"]),
+            ]
+
+            # CAGR only displays if greater than a year - 400 days to avoid 'approx 1 year' rounding with 10% 
+            display_cagr = (end - start).days > 400
+            if display_cagr:
+                metrics_to_display.insert(2, ("CAGR", performance_metrics.loc["Strategy Net", "CAGR"]))
+
+            # Displays each metric in display_metric in columns
+            for col, (label, value) in zip(st.columns(len(metrics_to_display)), metrics_to_display):
+                col.metric(label, value)
             
-            col_1, col_2, col_3, col_4 = st.columns(4)
-            col_1.metric("CAGR", performance_table.loc["Strategy Net", "CAGR"])
-            col_2.metric("Sharpe Ratio", performance_table.loc["Strategy Net", "Sharpe Ratio"])
-            col_3.metric("Benchmark CAGR", performance_table.loc["Buy & Hold", "CAGR"])
-            col_4.metric("Volatility", performance_table.loc["Strategy Net", "Ann StDev"])
             st.divider()
 
             fig = build_results_plotly(results)
@@ -146,7 +178,12 @@ if st.session_state.run_strategy_clicked:
             st.plotly_chart(fig, width="stretch")
 
             # Show the performance
-            st.dataframe(performance_table)
+            if display_cagr:
+                st.dataframe(performance_metrics)
+            else:
+                st.dataframe(performance_metrics.drop(columns="CAGR"))
+
+            print(bot.performance_metrics)
 
         except Exception as e: 
             st.error(f"Error: {str(e)}. Check your inputs") 

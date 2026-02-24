@@ -19,6 +19,7 @@ class Backtester:
 
         self.raw_data = self.get_data()
         self.results = None
+        self.performance_metrics = None
         self.commission = 0.1 / 100     # Hard-coded for now
 
     @classmethod
@@ -73,6 +74,8 @@ class Backtester:
         # Save the results as an attribute
         self.results = data
 
+        self.performance_metrics = get_performance_metrics(self.results)
+
     def print_performance(self):
         if self.results is None:
             print("No results yet - run 'run_strategy_backtest()' first")
@@ -89,12 +92,6 @@ class Backtester:
         print(tabulate(performance_metrics, headers='keys', tablefmt='pretty'))
 
         return performance_metrics
-    
-    def get_results(self):
-        return self.results
-    
-    def get_positions(self):
-        return self.results['position']
 
     def plot_matplotlib(self):
         if self.results is None:

@@ -31,5 +31,5 @@ bot.strategy_params = optimal_strategy_params       # Updates the objects attrib
 bot.run_strategy_backtest()
 bot.print_performance()
 fig, ax = bot.plot_matplotlib()         
-ax = overlay_trades(bot.get_positions(), ax)    # Overlays the trades onto the plot, using the positions
+ax = overlay_trades(bot.results['position'], ax)    # Overlays the trades onto the plot, using the positions
 plt.show()
