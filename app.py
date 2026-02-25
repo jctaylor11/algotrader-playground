@@ -25,6 +25,9 @@ if 'optimal_params' not in st.session_state:
     st.session_state.optimal_params = None
 if 'run_strategy_clicked' not in st.session_state:   # Since buttons don't retain state
     st.session_state.run_strategy_clicked = False  
+if 'backtester' not in st.session_state:
+    st.session_state.backtester = None
+
 
 ## Constants ##
 AVAILABLE_PAIRS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT']
@@ -53,7 +56,7 @@ with st.sidebar:
 
     if st.button("Load Data", width="stretch"):
         if start > end: 
-            st.Error("Start must be before end")
+            st.error("Start must be before end")
         else:
             loading_bar = st.progress(0, "Loading")
             try:
@@ -70,6 +73,7 @@ with st.sidebar:
                     }
                 else:
                     st.error("No data found")
+
             except Exception as e:
                 st.error(f"Failed to load data: {str(e)}")
 
@@ -91,7 +95,6 @@ if st.session_state.custom_data is not None:
         strategy_options = list(STRATEGY_MAPPING)
         selected_strategy = st.selectbox(label="Select Strategy", options=strategy_options, index=None)
 
-        strategy_params = {}    # Initialised outside of conditional for variable scope
         if selected_strategy in strategy_options:
             # Retrieves selected strategy's function to render UI components 
             render_strategy_function = STRATEGY_MAPPING[selected_strategy]["component"]  
@@ -102,8 +105,24 @@ if st.session_state.custom_data is not None:
             # Retrieves selected stratgey's logic function
             selected_strategy_function = STRATEGY_MAPPING[selected_strategy]["function"]
 
-    if selected_strategy and st.button("Run Backtest", type="primary", width="stretch"):
+        if selected_strategy and st.button("Run Backtest", type="primary", width="stretch"):
             st.session_state.run_strategy_clicked = True
+            st.session_state.strategy_params = strategy_params
+
+            try:
+                # Instantiates backtester, runs the test, and stores the object
+                backtester = Backtester(
+                    dataframe=st.session_state.custom_data,
+                    start=start,
+                    end=end,
+                    strategy_function=selected_strategy_function,       
+                    strategy_params=strategy_params
+                )
+                backtester.run_strategy_backtest()
+                st.session_state.backtester = backtester
+
+            except Exception as e: 
+                st.error(f"Error: {str(e)}. Check your inputs") 
 
 else:
     st.info("Select and load data from the sidebar to begin")
@@ -113,79 +132,58 @@ if st.session_state.run_strategy_clicked:
     st.subheader("Performance")
 
     with st.container():
-        try:
-            # Adding the strategy params as an attribute to the object
-            bot = Backtester(
-                dataframe=st.session_state.custom_data,
-                start=start,
-                end=end,
-                strategy_function=selected_strategy_function,       
-                strategy_params=strategy_params
-            )
+        # Runs the backtest and get results
+        performance_metrics = st.session_state.backtester.performance_metrics
+        results = st.session_state.backtester.results
 
-            # Runs the backtest and get results
-            bot.run_strategy_backtest()
-            performance_metrics = bot.performance_metrics
-            results = bot.results
+        print(performance_metrics)
+        print(results)
 
-            # Formatting the metrics for significant figures to display
-            for col in performance_metrics.columns:
-                if col in ('CAGR', 'Total Return'):
-                    performance_metrics[col] = performance_metrics[col].map("{:.0%}".format)
-                else:
-                    performance_metrics[col] = performance_metrics[col].map("{:.2f}".format)
+        total_return = performance_metrics.loc["Strategy", "Total Return"]
+        benchmark_return = performance_metrics.loc["Buy & Hold", "Total Return"]
+        excess_return = total_return - benchmark_return
 
-            # if (end - start).days > 400:
-            #     col_1, col_2, col_3, col_4, col_5 = st.columns(5)
-            #     col_1.metric("Total Return", performance_metrics.loc["Strategy Net", "Total Return"])
-            #     col_2.metric("Benchmark Return", performance_metrics.loc["Buy & Hold", "Total Return"])
-            #     col_3.metric("CAGR", performance_metrics.loc["Strategy Net", "CAGR"])
-            #     col_4.metric("Sharpe Ratio", performance_metrics.loc["Strategy Net", "Sharpe Ratio"])
-            #     col_5.metric("Volatility", performance_metrics.loc["Strategy Net", "Ann StDev"])
-            # else:
-            #     col_1, col_2, col_3, col_4 = st.columns(4)
-            #     col_1.metric("Total Return", performance_metrics.loc["Strategy Net", "Total Return"])
-            #     col_2.metric("Benchmark Return", performance_metrics.loc["Buy & Hold", "Total Return"])
-            #     col_3.metric("Sharpe Ratio", performance_metrics.loc["Strategy Net", "Sharpe Ratio"])
-            #     col_4.metric("Volatility", performance_metrics.loc["Strategy Net", "Ann StDev"])
-
-            metrics_to_display = [
-            ("Total Return",     performance_metrics.loc["Strategy Net", "Total Return"]),
-            ("Benchmark Return", performance_metrics.loc["Buy & Hold",   "Total Return"]),
-            ("Sharpe Ratio",     performance_metrics.loc["Strategy Net", "Sharpe Ratio"]),
-            ("Volatility",       performance_metrics.loc["Strategy Net", "Ann StDev"]),
-            ]
-
-            # CAGR only displays if greater than a year - 400 days to avoid 'approx 1 year' rounding with 10% 
-            display_cagr = (end - start).days > 400
-            if display_cagr:
-                metrics_to_display.insert(2, ("CAGR", performance_metrics.loc["Strategy Net", "CAGR"]))
-
-            # Displays each metric in display_metric in columns
-            for col, (label, value) in zip(st.columns(len(metrics_to_display)), metrics_to_display):
-                col.metric(label, value)
-            
-            st.divider()
-
-            fig = build_results_plotly(results)
-
-            overlay_trades = st.checkbox(label="Overlay trades on chart")
-
-            if overlay_trades:
-                with st.spinner('Processing trades', show_time=True):
-                    fig = overlay_trades_plotly(results['position'], fig)
-
-            st.plotly_chart(fig, width="stretch")
-
-            # Show the performance
-            if display_cagr:
-                st.dataframe(performance_metrics)
+        # Formatting the metrics for significant figures to display
+        display_metrics = performance_metrics.copy()
+        for col in display_metrics.columns:
+            if col in ('CAGR', 'Total Return'):
+                display_metrics[col] = display_metrics[col].map("{:.0%}".format)
             else:
-                st.dataframe(performance_metrics.drop(columns="CAGR"))
+                display_metrics[col] = display_metrics[col].map("{:.2f}".format)
 
-            print(bot.performance_metrics)
+        # List of tuples for display in format (label, value, delta, help message)
+        metrics_to_display = [
+            ("Total Return",     display_metrics.loc["Strategy", "Total Return"], f"{excess_return:.0%}", "Total Return excluding fees (for now).  \nDelta shows excess return against benchmark."),
+            ("Benchmark Return", display_metrics.loc["Buy & Hold", "Total Return"], "",                   "Buy & Hold used as benchmark"),
+            ("Volatility",       display_metrics.loc["Strategy", "Ann StDev"],    "",                     ""),
+            ("Sharpe Ratio",     display_metrics.loc["Strategy", "Sharpe Ratio"], "",                     "")
+        ]
 
-        except Exception as e: 
-            st.error(f"Error: {str(e)}. Check your inputs") 
+        # CAGR only displays if greater than a year - 400 days to avoid 'approx 1 year' rounding with 10% 
+        display_cagr = (end - start).days > 400
+        if display_cagr:
+            metrics_to_display.insert(2, ("CAGR", display_metrics.loc["Strategy Net", "CAGR"], "", ""))
+
+        # Displays each metric in display_metric in columns
+        for col, (label, value, delta, help) in zip(st.columns(len(metrics_to_display)), metrics_to_display):
+            col.metric(label, value, delta=delta, help=help)
+        
+        st.divider()
+
+        fig = build_results_plotly(results)
+
+        overlay_trades = st.checkbox(label="Overlay trades on chart")
+
+        if overlay_trades:
+            with st.spinner('Processing trades', show_time=True):
+                fig = overlay_trades_plotly(results['position'], fig)
+
+        st.plotly_chart(fig, width="stretch")
+
+        # Show the performance
+        if display_cagr:
+            st.dataframe(display_metrics)
+        else:
+            st.dataframe(display_metrics.drop(columns="CAGR"))
 
 
