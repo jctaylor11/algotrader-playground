@@ -127,6 +127,27 @@ def _clean_ohlcv_data(df):
     return df
 
 
+def fetch_min_volume_tickers(min_volume):
+    """
+    Returns all tickers quoted in USDT which a 24hr USDT volume greater than the min_volume argument.
+    Sorted alpahbetically. 
+    """
+    try:
+        all_tickers_data = client.get_ticker()
+    except Exception as e:
+        print(f"Failed to fetch tickers: {e}")
+        return []
+
+    tickers = []
+    for ticker in all_tickers_data:
+        if ticker['symbol'][-4:] == 'USDT' and float(ticker['quoteVolume']) > min_volume:
+            tickers.append(ticker['symbol'])
+    
+    tickers.sort()
+    return tickers
+
+
+
 # Required since Streamlit-decorated functions will break if called from outside of Streamlit
 # This will decorate the function only if running in Streamlit context
 # Inner function (_fetch_binance_ohlcv_batch) cached instead of outer (fetch_custom_binance_ohlcv) due to callback function compatibility with st.cache_data

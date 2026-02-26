@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from src.backtest.backtester_class import Backtester
-from src.data.historical_data import fetch_custom_binance_ohlcv
+from src.data.historical_data import fetch_custom_binance_ohlcv, fetch_min_volume_tickers
 from src.strategies.ma_crossover import ma_crossover_strategy
 from src.ui.components import render_ma_crossover_inputs
 from src.visualisation.results_plots import build_results_plotly, overlay_trades_plotly
@@ -30,7 +30,7 @@ if 'backtester' not in st.session_state:
 
 
 ## Constants ##
-AVAILABLE_PAIRS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT']
+PRIMARY_AVAILABLE_PAIRS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT']
 
 AVAILABLE_INTERVALS = ['1w', '1d', '4h', '1h']
 
@@ -49,7 +49,14 @@ STRATEGY_MAPPING = {
 with st.sidebar:
     st.header("Data Input")
 
-    coin_pair = st.selectbox("Pair", options=AVAILABLE_PAIRS)
+    # Fetches all tickers above a threshold 24hr volume to display in coin_pair selectbox
+    min_volume_for_tickers = 10000000
+    all_tickers = fetch_min_volume_tickers(min_volume=min_volume_for_tickers)
+    all_other_tickers = [ticker for ticker in all_tickers if ticker not in PRIMARY_AVAILABLE_PAIRS]  # To avoid repeats
+    AVAILABLE_PAIRS = PRIMARY_AVAILABLE_PAIRS + [" ━━━━━━━ "] + all_other_tickers
+
+    # User inputs
+    coin_pair = st.selectbox("Pair", options=AVAILABLE_PAIRS, help=f"Items below divider are all Binance USDT pairs  \nwith a 24 hour volume greater than ${min_volume_for_tickers:,}.")
     interval = st.selectbox("Interval", options=AVAILABLE_INTERVALS, index=3)
     start = st.date_input("Start", "2024-01-01")
     end = st.date_input("End", "2025-01-01")
@@ -57,6 +64,8 @@ with st.sidebar:
     if st.button("Load Data", width="stretch"):
         if start > end: 
             st.error("Start must be before end")
+        elif coin_pair not in all_tickers:
+            st.error("Select a valid coin pair")
         else:
             loading_bar = st.progress(0, "Loading")
             try:
