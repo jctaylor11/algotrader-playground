@@ -52,7 +52,7 @@ with st.sidebar:
     # Fetches all tickers above a threshold 24hr volume to display in coin_pair selectbox
     min_volume_for_tickers = 10000000
     all_tickers = fetch_min_volume_tickers(min_volume=min_volume_for_tickers)
-    all_other_tickers = [ticker for ticker in all_tickers if ticker not in PRIMARY_AVAILABLE_PAIRS]  # To avoid repeats
+    all_other_tickers = [ticker for ticker in all_tickers if ticker not in PRIMARY_AVAILABLE_PAIRS]  # To avoid duplicates
     AVAILABLE_PAIRS = PRIMARY_AVAILABLE_PAIRS + [" ━━━━━━━ "] + all_other_tickers
 
     # User inputs
