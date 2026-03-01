@@ -36,14 +36,28 @@ def main():
                     """))
         
         conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS outcomes(
+                    CREATE TABLE IF NOT EXISTS outcomes (
                           id SERIAL PRIMARY KEY,
                           candle_id integer REFERENCES candles(id),
                           return_threshold numeric,
-                          candles_to_hit integer),
-                          UNIQUE (candle_id, return_threshold);
+                          candles_to_hit integer,
+                          UNIQUE (candle_id, return_threshold));
                     """))
-      
+        
+        conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS indicator_lookup (
+                          id SERIAL PRIMARY KEY,
+                          indicator_name text);
+                    """))
+        
+        conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS indicator_values (
+                          id SERIAL PRIMARY KEY,
+                          candle_id integer REFERENCES candles(id),
+                          indicator_id integer REFERENCES indicator_lookup(id),
+                          indicator_value numeric,
+                          UNIQUE (candle_id, indicator_id));
+                    """))
 
 if __name__ == "__main__":
     main()
