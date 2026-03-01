@@ -129,8 +129,8 @@ def _clean_ohlcv_data(df):
 
 def fetch_min_volume_tickers(min_volume):
     """
-    Returns all tickers quoted in USDT which a 24hr USDT volume greater than the min_volume argument.
-    Sorted alpahbetically. 
+    Returns all tickers quoted in USDT with a 24hr USDT volume greater than the min_volume argument.
+    Sorted alphabetically. 
     """
     try:
         all_tickers_data = client.get_ticker()
