@@ -16,9 +16,9 @@ def fetch_custom_binance_ohlcv(symbol, interval, start, end, _progress_cb=None):
     Fetches and cleans custom ohlcv data from Binance, as requested by user in Streamlit app.py.
     Return Pandas dataframe.
     """
-    custom_data = _fetch_binance_ohlcv_all(symbol, interval, start, end, _progress_cb)
+    custom_data = fetch_binance_ohlcv_all(symbol, interval, start, end, _progress_cb)
 
-    custom_data = _clean_ohlcv_data(custom_data) 
+    custom_data = clean_ohlcv_data(custom_data) 
 
     return custom_data
 
@@ -38,9 +38,9 @@ def save_binance_ohlcv(symbol, interval, start=None, end=None):
         end = datetime.now().strftime("%Y-%m-%d")
         
     # Iteratively pulls all the data in batches from Binance to save as csv
-    df_to_save = _fetch_binance_ohlcv_all(symbol, interval, start, end)
+    df_to_save = fetch_binance_ohlcv_all(symbol, interval, start, end)
 
-    df_to_save = _clean_ohlcv_data(df_to_save)
+    df_to_save = clean_ohlcv_data(df_to_save)
 
     filepath = f"data/raw_ohlcv/{symbol}-{interval}-{start}.csv"
     df_to_save.to_csv(filepath, index=True)
@@ -48,7 +48,7 @@ def save_binance_ohlcv(symbol, interval, start=None, end=None):
     return filepath
 
 
-def _fetch_binance_ohlcv_all(symbol, interval, start, end, progress_cb=None):
+def fetch_binance_ohlcv_all(symbol, interval, start, end, progress_cb=None):
     latest_timestamp = None
 
     # If start is earlier than earliest start, start = earliest start
@@ -118,7 +118,7 @@ def _format_ohlcv_data(df):
     return df
 
 
-def _clean_ohlcv_data(df):
+def clean_ohlcv_data(df):
     # Remove any duplicates
     duplicates = df.index.duplicated()
     df = df[~duplicates]
@@ -154,7 +154,7 @@ def fetch_min_volume_tickers(min_volume):
 try:
     _fetch_binance_ohlcv_batch = st.cache_data(show_spinner=False)(_fetch_binance_ohlcv_batch)
 except RuntimeError:
-    pass
+    print("Not called from Streamlit - not applying cache")
 
 
 # For testing

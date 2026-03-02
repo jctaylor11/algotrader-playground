@@ -18,7 +18,7 @@ def main():
         conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS interval_lookup (
                           id SERIAL PRIMARY KEY,
-                          interval_name text);
+                          interval_name text UNIQUE);
                     """))
 
         conn.execute(text("""
@@ -58,6 +58,7 @@ def main():
                           indicator_value numeric,
                           UNIQUE (candle_id, indicator_id));
                     """))
+
 
 if __name__ == "__main__":
     main()
