@@ -37,15 +37,10 @@ def populate_candles(pair, interval, start, end, engine):
         }, inplace=True)
 
     with engine.begin() as conn: 
-        # Get or create interval id in lookup table
-        interval_id = conn.execute(text("SELECT id FROM interval_lookup WHERE interval_name = :interval;"), {"interval": interval}).scalar()
-        if interval_id is None: 
-            interval_id = conn.execute(text("INSERT INTO interval_lookup (interval_name) VALUES (:interval) RETURNING id"), {"interval": interval}).scalar()
+        # Get or create interval id and pair id in lookup table
+        pair_id = get_or_create_lookup(conn, "pair_lookup", "coin_pair", pair)
+        interval_id = get_or_create_lookup(conn, "interval_lookup", "interval_name", interval)
 
-        # Get or create pair id in lookup table
-        pair_id = conn.execute(text("SELECT id FROM pair_lookup WHERE coin_pair = :symbol;"), {"symbol": pair}).scalar()
-        if pair_id is None: 
-            pair_id = conn.execute(text("INSERT INTO pair_lookup (coin_pair) VALUES (:symbol) RETURNING id"), {"symbol": pair}).scalar()
 
         # Add pair id and interval id foreign keys to candles df
         candles_df["pair_id"] = pair_id
@@ -54,3 +49,10 @@ def populate_candles(pair, interval, start, end, engine):
         # Insert candles df to postgres
         candles_df.to_sql('candles', conn, if_exists='append', index=False)
 
+
+def get_or_create_lookup(conn, table, column, value):
+    row_id = conn.execute(text(f"SELECT id FROM {table} WHERE {column} = :symbol;"), {"symbol": value}).scalar()
+    if row_id is None: 
+        row_id = conn.execute(text(f"INSERT INTO {table} ({column}) VALUES (:symbol) RETURNING id"), {"symbol": value}).scalar()
+    
+    return row_id
