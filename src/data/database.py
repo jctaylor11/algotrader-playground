@@ -55,16 +55,22 @@ def populate_outcomes(engine, threshold):
     Assumes candle IDs are in order of date and contiguously stored. 
     """
     with engine.begin() as conn: 
+        if threshold > 1: 
+            join_condition = "b.high > a.close * :threshold"
+        else:
+            join_condition = "b.high < a.close * :threshold"
+
         # LEFT JOIN used so applies to each parent candle, rather than silently dropping
-        conn.execute(text("""
+        conn.execute(text(f"""
             INSERT INTO outcomes (candle_id, return_threshold, candles_to_hit)
             SELECT 
                 a.id AS candle_id,
                 :threshold AS return_threshold,
                 MIN(b.id) - a.id AS candles_to_hit
             FROM candles a
-            LEFT JOIN candles b ON b.id > a.id AND b.high > a.high * :threshold
+            LEFT JOIN candles b ON b.id > a.id AND {join_condition}
             GROUP BY a.id, a.high
+            LIMIT 100
             ON CONFLICT (candle_id, return_threshold) DO UPDATE
                 SET candles_to_hit = EXCLUDED.candles_to_hit
         """), {"threshold": threshold})

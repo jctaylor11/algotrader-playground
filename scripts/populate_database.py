@@ -1,9 +1,8 @@
 from sqlalchemy import text
-import pandas as pd
 
 from src.data.database import get_engine, populate_candles, populate_outcomes
 
-engine = get_engine()
+REBUILD_CANDLES = False
 
 # Define inputs
 pair = "BTCUSDT"
@@ -11,7 +10,13 @@ interval = "1h"
 start = "2021-01-01"
 end = "2023-01-01"
 
-threshold = 1.05    # For returns in outcomes table
+thresholds = [i / 100 for i in range(90, 111) if i != 100]
 
-populate_candles(pair, interval, start, end, engine)
-populate_outcomes(engine, threshold)
+engine = get_engine()
+
+if REBUILD_CANDLES:
+    populate_candles(pair, interval, start, end, engine)
+
+for threshold in thresholds:
+    populate_outcomes(engine, threshold)
+
