@@ -41,13 +41,33 @@ def populate_candles(pair, interval, start, end, engine):
         pair_id = get_or_create_lookup(conn, "pair_lookup", "coin_pair", pair)
         interval_id = get_or_create_lookup(conn, "interval_lookup", "interval_name", interval)
 
-
         # Add pair id and interval id foreign keys to candles df
         candles_df["pair_id"] = pair_id
         candles_df["interval_id"] = interval_id
 
         # Insert candles df to postgres
         candles_df.to_sql('candles', conn, if_exists='append', index=False)
+
+
+def populate_outcomes(engine, threshold):
+    """
+    Populates the number of candles passed from the starting candle before it first hits the given return threshold.  
+    Assumes candle IDs are in order of date and contiguously stored. 
+    """
+    with engine.begin() as conn: 
+        # LEFT JOIN used so applies to each parent candle, rather than silently dropping
+        conn.execute(text("""
+            INSERT INTO outcomes (candle_id, return_threshold, candles_to_hit)
+            SELECT 
+                a.id AS candle_id,
+                :threshold AS return_threshold,
+                MIN(b.id) - a.id AS candles_to_hit
+            FROM candles a
+            LEFT JOIN candles b ON b.id > a.id AND b.high > a.high * :threshold
+            GROUP BY a.id, a.high
+            ON CONFLICT (candle_id, return_threshold) DO UPDATE
+                SET candles_to_hit = EXCLUDED.candles_to_hit
+        """), {"threshold": threshold})
 
 
 def get_or_create_lookup(conn, table, column, value):

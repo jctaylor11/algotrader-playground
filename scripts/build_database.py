@@ -33,7 +33,7 @@ def main():
                           close numeric,
                           volume numeric,
                           UNIQUE (open_timestamp, pair_id, interval_id));
-                    """))3
+                    """))
         
         conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS outcomes (
