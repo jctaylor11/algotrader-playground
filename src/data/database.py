@@ -56,9 +56,9 @@ def populate_outcomes(engine, threshold):
     """
     with engine.begin() as conn: 
         if threshold > 1: 
-            join_condition = "b.high > a.close * :threshold"
+            join_condition = "b.high > a.close * (1 + :threshold)"
         else:
-            join_condition = "b.high < a.close * :threshold"
+            join_condition = "b.high < a.close * (1 + :threshold)"
 
         # LEFT JOIN used so applies to each parent candle, rather than silently dropping
         conn.execute(text(f"""
