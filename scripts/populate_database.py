@@ -1,9 +1,10 @@
 from sqlalchemy import text
 
-from src.data.database import get_engine, populate_candles, populate_outcomes
+from src.data.database import get_engine, populate_candles, populate_outcomes, populate_indicator_rsi
 
 REBUILD_CANDLES = False
-REBUILD_OUTCOMES = True
+REBUILD_OUTCOMES = False
+REBUILD_RSI_INDICATOR = True
 
 # Define inputs
 pair = "BTCUSDT"
@@ -23,3 +24,5 @@ if REBUILD_OUTCOMES:
     for threshold in thresholds:
         populate_outcomes(engine, threshold)
 
+if REBUILD_RSI_INDICATOR:
+    populate_indicator_rsi(engine)

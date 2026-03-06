@@ -110,7 +110,7 @@ def _format_ohlcv_data(df):
     df["date"] = pd.to_datetime(df["open_time"], unit='ms')
     df.set_index("date", inplace = True)
 
-    df = df[["open", "high", "low", "close", "volume"]].copy()
+    df = df[["open", "volume"]].copy()
 
     for col in df.columns:
         df[col] = pd.to_numeric(df[col], errors = "coerce")
@@ -159,7 +159,7 @@ except RuntimeError:
 
 # For testing
 if __name__ == "__main__":
-    filepath = save_binance_ohlcv('BTCUSDT', '8h', start="2024-01-01", end="2025-01-01")
+    filepath = save_binance_ohlcv('BTCUSDT', '1d', start="2026-01-01", end="2026-03-01")
     # print(filepath)
 
     # df = fetch_custom_binance_ohlcv('BTCUSDT', '4h', start='2025-01-01', end='2025-05-05')

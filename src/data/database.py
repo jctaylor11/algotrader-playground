@@ -75,6 +75,42 @@ def populate_outcomes(engine, threshold):
                 SET candles_to_hit = EXCLUDED.candles_to_hit
         """), {"threshold": threshold})
 
+    
+def populate_indicator_rsi(engine):
+    with engine.begin() as conn:
+        indicator_id = get_or_create_lookup(conn, "indicator_lookup", "indicator_name", "rsi")
+
+        conn.execute(text("""
+            WITH deltas AS (                -- CTE to precalculate the difference with the last relevant row
+                SELECT 
+                    id AS candle_id,
+                    open_timestamp,         
+                    pair_id,
+                    interval_id,
+                    "close" - LAG("close") OVER (PARTITION BY pair_id, interval_id ORDER BY open_timestamp) AS delta 	-- Parition to group by pair_id and interval_id so only candles within the same series are looked at 
+                FROM candles
+            ),
+            gain_losses AS (                -- CTE to separate gains from losses for RSI calculation
+                SELECT 
+                    *,          
+                    GREATEST(delta, 0) AS gain,
+                    GREATEST(-delta, 0) AS loss
+                FROM deltas
+            )
+            INSERT INTO indicator_values (candle_id, indicator_id, indicator_value)
+            SELECT 
+                candle_id,
+                :indicator_id,
+                100 - (100.0 / (1 +         -- RSI = 100 - 100 / (1 + AVG(gain) / AVG(loss) for last 14 periods)
+                AVG(gain) OVER (PARTITION BY pair_id, interval_id ORDER BY open_timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) / 
+                NULLIF (AVG(loss) OVER (PARTITION BY pair_id, interval_id ORDER BY open_timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW), 0)		--NULLIF required to avoid division by zero
+                )) AS RSI
+            FROM gain_losses
+            ;"""), {"indicator_id": indicator_id})
+
+    
+
+  
 
 def get_or_create_lookup(conn, table, column, value):
     row_id = conn.execute(text(f"SELECT id FROM {table} WHERE {column} = :symbol;"), {"symbol": value}).scalar()

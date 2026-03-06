@@ -6,7 +6,7 @@ from src.strategies.ma_crossover import ma_crossover_strategy
 
 def render_ma_crossover_inputs(dataframe, start, end):   # TODO: Take previously downloaded and cached dataframe instead of filepath
     # Set inputs ranges and defaults
-    ma_s_min = 5
+    ma_s_min = 1
     ma_s_max = 100
     ma_s_default = 20
     ma_l_min = 10
