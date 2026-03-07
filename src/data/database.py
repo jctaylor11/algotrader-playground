@@ -34,6 +34,9 @@ def populate_candles(pair, interval, start, end, engine):
     candles_df.rename(columns={
         "date": "open_timestamp",
         "open": "open_price",
+        "high": "high_price",
+        "low": "low_price",
+        "close": "close_price"
         }, inplace=True)
 
     with engine.begin() as conn: 
@@ -56,9 +59,9 @@ def populate_outcomes(engine, threshold):
     """
     with engine.begin() as conn: 
         if threshold > 1: 
-            join_condition = "b.high > a.close * (1 + :threshold)"
+            join_condition = "b.high_price > a.close_price * (1 + :threshold)"
         else:
-            join_condition = "b.high < a.close * (1 + :threshold)"
+            join_condition = "b.high_price < a.close_price * (1 + :threshold)"
 
         # LEFT JOIN used so applies to each parent candle, rather than silently dropping
         conn.execute(text(f"""
@@ -69,7 +72,7 @@ def populate_outcomes(engine, threshold):
                 MIN(b.id) - a.id AS candles_to_hit
             FROM candles a
             LEFT JOIN candles b ON b.id > a.id AND {join_condition}
-            GROUP BY a.id, a.high
+            GROUP BY a.id, a.high_price
             LIMIT 100
             ON CONFLICT (candle_id, return_threshold) DO UPDATE
                 SET candles_to_hit = EXCLUDED.candles_to_hit
@@ -78,7 +81,7 @@ def populate_outcomes(engine, threshold):
     
 def populate_indicator_rsi(engine):
     with engine.begin() as conn:
-        rsi_period = 10
+        rsi_period = 14     # 14 is standard RSI period
         indicator_id = get_or_create_lookup(conn, "indicator_lookup", "indicator_name", "rsi")
 
         conn.execute(text("""
@@ -88,7 +91,7 @@ def populate_indicator_rsi(engine):
                     open_timestamp,
                     pair_id,
                     interval_id,
-                    "close" - LAG("close") OVER (PARTITION BY pair_id, interval_id ORDER BY open_timestamp) AS delta 	-- Parition by pair_id and interval_id since they define a unique candle
+                    close_price - LAG(close_price) OVER (PARTITION BY pair_id, interval_id ORDER BY open_timestamp) AS delta 	-- Parition by pair_id and interval_id since they define a unique candle
                 FROM candles
             ),
             gain_losses AS (            -- CTE to separate the gains from the losses 
@@ -116,9 +119,6 @@ def populate_indicator_rsi(engine):
             WHERE row_num > (:rsi_period - 1)
             ;"""), {"indicator_id": indicator_id, "rsi_period": rsi_period})
 
-    
-
-  
 
 def get_or_create_lookup(conn, table, column, value):
     row_id = conn.execute(text(f"SELECT id FROM {table} WHERE {column} = :symbol;"), {"symbol": value}).scalar()

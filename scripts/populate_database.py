@@ -2,8 +2,8 @@ from sqlalchemy import text
 
 from src.data.database import get_engine, populate_candles, populate_outcomes, populate_indicator_rsi
 
-REBUILD_CANDLES = False
-REBUILD_OUTCOMES = False
+REBUILD_CANDLES = True
+REBUILD_OUTCOMES = True
 REBUILD_RSI_INDICATOR = True
 
 # Define inputs

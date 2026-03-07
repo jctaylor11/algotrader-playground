@@ -110,7 +110,7 @@ def _format_ohlcv_data(df):
     df["date"] = pd.to_datetime(df["open_time"], unit='ms')
     df.set_index("date", inplace = True)
 
-    df = df[["open", "volume"]].copy()
+    df = df[["open", "high", "low", "close", "volume"]].copy()
 
     for col in df.columns:
         df[col] = pd.to_numeric(df[col], errors = "coerce")
