@@ -2,18 +2,18 @@ from sqlalchemy import text
 
 from src.data.database import get_engine, populate_candles, populate_outcomes, populate_indicator_rsi
 
-REBUILD_CANDLES = True
+REBUILD_CANDLES = False
 REBUILD_OUTCOMES = True
-REBUILD_RSI_INDICATOR = True
+REBUILD_RSI_INDICATOR = False
 
 # Define inputs
 pair = "BTCUSDT"
 interval = "1h"
 start = "2021-01-01"
-end = "2023-01-01"
+end = "2022-01-01"
 
 # Custom thresholds ranging from -10% to +10%. Threshold flexibility is accommodated by long format of outcomes schema
-thresholds = [i / 100 for i in range(-10, 11) if i != 10]
+thresholds = [i / 100 for i in range(-10, 11) if i != 0]
 
 engine = get_engine()
 
