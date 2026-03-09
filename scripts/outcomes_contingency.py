@@ -18,22 +18,33 @@ from src.data.database import get_engine
 conn = get_engine()
 
 query = """
+    WITH candle_count AS (
+        SELECT
+            COUNT (DISTINCT candle_id) AS total_candles
+        FROM OUTCOMES
+    )
     SELECT
         a.return_threshold AS threshold_x,
         b.return_threshold AS threshold_y,
-        COUNT(*) AS count_x_before_y
+        COUNT(*) AS count_x_before_y,
+        total_candles
     FROM outcomes a
-    JOIN outcomes b ON a.candle_id = b.candle_id
-        AND a.return_threshold < b.return_threshold
+    JOIN outcomes b ON a.candle_id = b.candle_id AND (a.return_threshold * b.return_threshold < 0)
+    CROSS JOIN candle_count
     WHERE a.candles_to_hit < b.candles_to_hit
-    GROUP BY threshold_x, threshold_y
+        OR (a.candles_to_hit IS NOT NULL AND b.candles_to_hit IS NULL) 
+    GROUP BY threshold_x, threshold_y, total_candles
     ORDER BY threshold_x;
 """
 
-df = pd.read_sql(query, conn)
+outcomes_df = pd.read_sql(query, conn)
+
+# Extract total candles for use in denominator in proportion calculation
+total_candles = outcomes_df['total_candles'][0]
+outcomes_df['probability'] = outcomes_df['count_x_before_y'] / total_candles
 
 # The df is in long format, and therefore pivoted to create a contingency table to count values where row threshold is hit by colum threshold
-contingency_table = df.pivot_table(index='threshold_x', columns='threshold_y', values='count_x_before_y')
+contingency_table = outcomes_df.pivot_table(index='threshold_x', columns='threshold_y', values='probability')
 
 # Seaborn to plot the contingency table
 plt.figure(figsize=(12, 8))
