@@ -37,5 +37,8 @@ contingency_table = df.pivot_table(index='threshold_x', columns='threshold_y', v
 
 # Seaborn to plot the contingency table
 plt.figure(figsize=(12, 8))
-sns.heatmap(contingency_table)
+ax = sns.heatmap(contingency_table, annot=True)
+
+ax.invert_yaxis()
+
 plt.show()
