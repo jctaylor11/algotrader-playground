@@ -16,7 +16,8 @@ query = """
             candle_id,
             indicator_id,
             NTILE(:number_of_bins) OVER (PARTITION BY indicator_id ORDER BY indicator_value) AS percentile_bin
-        FROM indicator_values
+        FROM indicator_values              
+        WHERE candle_id IN (SELECT candle_id) FROM outcomes)
     ),
     indicator_binned_counts AS (            -- CTE for count of candles in each bin, only for pandas to pull through in one database request
         SELECT                              -- (ie it's not used in the core logic)
@@ -58,3 +59,4 @@ query = """
 raw_conditional_x_before_y= pd.read_sql(text(query), conn, params={"number_of_bins": number_of_bins, "holding_period": holding_period})
 
 print(raw_conditional_x_before_y)
+
