@@ -8,7 +8,7 @@ from src.data.database import get_engine
 conn = get_engine()
 
 number_of_bins = 10     # For discretisation of indicator values by percentile
-holding_period = 14     # Period limit for outcome to resolve - handled as unresolved if X or Y thresholds do not hit
+holding_period = 1000     # Period limit for outcome to resolve - handled as unresolved if X or Y thresholds do not hit
 
 query = """
     WITH indicator_binned AS (
@@ -17,7 +17,7 @@ query = """
             indicator_id,
             NTILE(:number_of_bins) OVER (PARTITION BY indicator_id ORDER BY indicator_value) AS percentile_bin
         FROM indicator_values              
-        WHERE candle_id IN (SELECT candle_id) FROM outcomes)
+        WHERE candle_id IN (SELECT candle_id FROM outcomes)
     ),
     indicator_binned_counts AS (            -- CTE for count of candles in each bin, only for pandas to pull through in one database request
         SELECT                              -- (ie it's not used in the core logic)
