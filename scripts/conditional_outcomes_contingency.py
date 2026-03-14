@@ -56,33 +56,40 @@ query = """
     ORDER BY threshold_x;
 """
 
-df = pd.read_sql(text(query), conn, params={"number_of_bins": number_of_bins, "holding_period": holding_period})
+df_raw = pd.read_sql(text(query), conn, params={"number_of_bins": number_of_bins, "holding_period": holding_period})
 
-df['probability'] = df['x_hit_before_y'] / df['bin_candle_count']
+df_raw['probability'] = df_raw['x_hit_before_y'] / df_raw['bin_candle_count']
 
 fig, axs = plt.subplots(3,4,figsize=(16, 9))
 axs = axs.flatten()     # To make it iterable
 
 # To ensure all subplots have the same scale for visual comparison
-p_min = df['probability'].min()
-p_max = df['probability'].max()
+p_min = df_raw['probability'].min()
+p_max = df_raw['probability'].max()
 
 # Iterates through each bin and adds as subplot
-total_bins = df['percentile_bin'].unique()
+total_bins = df_raw['percentile_bin'].unique()
 for percentile_bin in total_bins:
-    df_bin = df.loc[(df['indicator_id'] == 1) & (df['percentile_bin'] == percentile_bin)]   # Filter for bin
+    df_bin = df_raw.loc[(df_raw['indicator_id'] == 1) & (df_raw['percentile_bin'] == percentile_bin)]   # Filter for bin
     df_contingency = df_bin.pivot_table(values='probability', index='threshold_x', columns='threshold_y')
     sns.heatmap(df_contingency, ax=axs[percentile_bin-1], cmap='viridis', vmin=p_min, vmax=p_max, cbar=False)
+    axs[percentile_bin-1].invert_yaxis()
     axs[percentile_bin-1].set_title(f"Percentile Bin {percentile_bin}")
 
-# Spacings
+# Plot and colour bar spacings
 fig.subplots_adjust(left=0.05, right=0.85, top=0.92, bottom=0.12, hspace=0.6, wspace=0.4)
 cbar_ax = fig.add_axes([0.9, 0.12, 0.02, 0.78])  # [left, bottom, width, height]
 
 # One colour bar normalised by the global min and max probabilities
 fig.colorbar(plt.cm.ScalarMappable(norm=plt.Normalize(p_min, p_max), cmap='viridis'), cax=cbar_ax, label='Probability')
-
 fig.suptitle("Percentile Bin X Before Y Heatmap")
-
 plt.show()
 
+# All heatmaps on one
+df_multi_contingency = df_raw.pivot_table(values='probability', index='threshold_x', columns=['percentile_bin', 'threshold_y'])   # Multi column index
+
+fig, axs = plt.subplots(figsize=(16, 9))
+sns.heatmap(df_multi_contingency, cmap='viridis')
+axs.invert_yaxis()
+fig.suptitle("All Percentile Bins X before Y")
+plt.show()
