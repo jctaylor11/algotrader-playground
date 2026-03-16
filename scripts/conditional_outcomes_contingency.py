@@ -65,15 +65,15 @@ df_raw['probability'] = df_raw['x_hit_before_y'] / df_raw['bin_candle_count']
 fig, ax = plt.subplots(figsize=(12,8))
 
 indicator_id = 1
-percentile_bin = 5
+percentile_bin = 1
 df_bin = df_raw.loc[(df_raw['indicator_id'] == indicator_id) & (df_raw['percentile_bin'] == percentile_bin)]   # Filter for bin
-df_contingency = df_bin.pivot_table(values='probability', index='threshold_x', columns='threshold_y')
+df_contingency = df_bin.pivot_table(values='probability', index='threshold_y', columns='threshold_x')
 
 sns.heatmap(df_contingency, ax=ax, cmap='viridis')
 fig.suptitle(f"Probability of X before Y, Percentile Bin {percentile_bin}", fontsize=24)
 ax.set_xticklabels([f"{x*100:.0f}%" for x in df_contingency.columns])
 ax.set_yticklabels([f"{y*100:.0f}%" for y in df_contingency.index])
-ax.invert_yaxis()
+ax.invert_yaxis
 plt.show()
 
 ## All bin subplots view
@@ -88,7 +88,7 @@ p_max = df_raw['probability'].max()
 total_bins = df_raw['percentile_bin'].unique()
 for percentile_bin in total_bins:
     df_bin = df_raw.loc[(df_raw['indicator_id'] == 1) & (df_raw['percentile_bin'] == percentile_bin)] 
-    df_contingency = df_bin.pivot_table(values='probability', index='threshold_x', columns='threshold_y')
+    df_contingency = df_bin.pivot_table(values='probability', index='threshold_y', columns='threshold_x')
     sns.heatmap(df_contingency, ax=axs[percentile_bin-1], cmap='viridis', vmin=p_min, vmax=p_max, cbar=False)
     axs[percentile_bin-1].invert_yaxis()
     axs[percentile_bin-1].set_title(f"Percentile Bin {percentile_bin}")
@@ -103,7 +103,7 @@ fig.suptitle("Probability X Before Y, All Percentile Bins")
 plt.show()
 
 ## All heatmaps on one
-df_multi_contingency = df_raw.pivot_table(values='probability', index='threshold_x', columns=['percentile_bin', 'threshold_y'])   # Multi column index
+df_multi_contingency = df_raw.pivot_table(values='probability', index='threshold_y', columns=['percentile_bin', 'threshold_x'])   # Multi column index
 
 fig, axs = plt.subplots(figsize=(16, 9))
 sns.heatmap(df_multi_contingency, cmap='viridis')

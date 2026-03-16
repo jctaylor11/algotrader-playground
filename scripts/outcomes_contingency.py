@@ -49,7 +49,7 @@ total_candles = outcomes_df['total_candles'][0]
 outcomes_df['probability'] = outcomes_df['count_x_before_y'] / total_candles
 
 # The df is in long format, and therefore pivoted to create a contingency table to count values where row threshold is hit by colum threshold
-contingency_table = outcomes_df.pivot_table(index='threshold_x', columns='threshold_y', values='probability')
+contingency_table = outcomes_df.pivot_table(index='threshold_y', columns='threshold_x', values='probability')
 
 # Seaborn to plot the contingency table
 plt.figure(figsize=(12, 8))
