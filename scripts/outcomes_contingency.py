@@ -30,7 +30,7 @@ query = """
     SELECT
         a.return_threshold AS threshold_a,
         b.return_threshold AS threshold_b,
-        COUNT(*) AS count_x_before_y,
+        COUNT(*) AS count_a_before_b,
         total_candles
     FROM outcomes a
     JOIN outcomes b ON a.candle_id = b.candle_id AND (a.return_threshold * b.return_threshold < 0)
@@ -46,7 +46,7 @@ outcomes_df = pd.read_sql(text(query), conn, params={"holding_period": holding_p
 
 # Calculate probabilities from contingency values using total_candles as denominator
 total_candles = outcomes_df['total_candles'][0]
-outcomes_df['probability'] = outcomes_df['count_x_before_y'] / total_candles
+outcomes_df['probability'] = outcomes_df['count_a_before_b'] / total_candles
 
 # The df is in long format, and therefore pivoted to create a contingency table to count values where row threshold is hit by colum threshold
 contingency_table = outcomes_df.pivot_table(index='threshold_a', columns='threshold_b', values='probability')

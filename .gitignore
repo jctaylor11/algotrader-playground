@@ -214,3 +214,6 @@ anaconda_projects/
 
 # All user-saved ohlcv csv data
 raw_ohlcv/ 
+
+# Downloaded visualisation images
+.png

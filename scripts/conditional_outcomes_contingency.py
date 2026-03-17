@@ -9,7 +9,7 @@ from src.data.database import get_engine
 conn = get_engine()
 
 number_of_bins = 10     # For discretisation of indicator values by percentile
-holding_period = 1000     # Period limit for outcome to resolve - handled as unresolved if X or Y thresholds do not hit
+holding_period = 1000     # Period limit for outcome to resolve - handled as unresolved if A or B thresholds do not hit
 
 query = """
     WITH indicator_binned AS (
@@ -33,7 +33,7 @@ query = """
         b.return_threshold AS threshold_b,
         ib.indicator_id,
         ib.percentile_bin,
-        COUNT(*) AS x_hit_before_y,
+        COUNT(*) AS a_hit_before_b,
         ibc.bin_candle_count
     FROM outcomes a
     JOIN indicator_binned ib 
@@ -59,7 +59,7 @@ query = """
 
 df_raw = pd.read_sql(text(query), conn, params={"number_of_bins": number_of_bins, "holding_period": holding_period})
 
-df_raw['probability'] = df_raw['x_hit_before_y'] / df_raw['bin_candle_count']
+df_raw['probability'] = df_raw['a_hit_before_b'] / df_raw['bin_candle_count']
 
 ## Single plot view
 fig, ax = plt.subplots(figsize=(12,8))
@@ -70,7 +70,7 @@ df_bin = df_raw.loc[(df_raw['indicator_id'] == indicator_id) & (df_raw['percenti
 df_contingency = df_bin.pivot_table(values='probability', index='threshold_a', columns='threshold_b')
 
 sns.heatmap(df_contingency, ax=ax, cmap='viridis')
-fig.suptitle(f"Probability of Threshold X before Threshold Y\nIndicator ID {indicator_id}, Percentile Bin {percentile_bin}", fontsize=24)
+fig.suptitle(f"Probability of Threshold A before Threshold B\nIndicator ID {indicator_id}, Percentile Bin {percentile_bin}", fontsize=24)
 ax.set_xticklabels([f"{x*100:.0f}%" for x in df_contingency.columns])
 ax.set_yticklabels([f"{y*100:.0f}%" for y in df_contingency.index])
 ax.invert_yaxis()
@@ -112,4 +112,21 @@ fig.suptitle(f"Probability of Threshold A Before Treshold B\nIndicator ID {indic
 plt.show()
 
 
-## EV Heatmap, fixed ID and bin
+## EV Heatmap, fixed ID and bin with fixed ID and percentile bin
+df_ev_raw = df_raw.loc[(df_raw['indicator_id'] == indicator_id) & (df_raw['percentile_bin'] == percentile_bin)]   # Filter for bin
+df_ev_slim = df_ev_raw[['threshold_a', 'threshold_b', 'probability']]
+
+# Self join to retrieve P(B before A) by flipping the index on P(A before B)
+df_ev = df_ev_slim.merge(df_ev_slim, left_on=['threshold_a', 'threshold_b'], right_on=['threshold_b', 'threshold_a'], suffixes=['_A', '_B'])
+df_ev['ev'] = abs(df_ev['threshold_a_A']) * df_ev['probability_A'] + (-abs(df_ev['threshold_b_A']) * df_ev['probability_B'])
+
+ev_contingency = df_ev.pivot_table(values='ev', index='threshold_a_A', columns='threshold_b_A')
+
+# Plot heatmap
+fig, ax = plt.subplots(figsize=(12,8))
+sns.heatmap(ev_contingency, cmap='RdBu', center=0)
+ax.invert_yaxis()
+ax.set_ylabel("Take Profit")
+ax.set_xlabel("Stop Loss")
+fig.suptitle(f"Expected Value for Take-Profit/Stop-Loss Setup\nFor Inidicator ID {indicator_id} in Percentile Bin {percentile_bin}", fontsize=24)
+plt.show()
