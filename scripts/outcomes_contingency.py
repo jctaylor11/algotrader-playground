@@ -2,7 +2,7 @@
 Script to compute and visualise a contingency table showing which threshold is hit before the other.
 
 For each candle, it compares which return threshold was hit first in a threshold pair (for all pairs), and counts the occurrence for each. 
-Ultimately, it displays "How many outcomes hit X (row threshold) before Y (column threshold)".
+Ultimately, it displays "How many outcomes hit A (row threshold) before B (column threshold)".
 
 Since it is computed simultaneously in long format, the results are pivoted to a matrix format, to be displayed as a heatmap.
 
@@ -18,7 +18,7 @@ from src.data.database import get_engine
 
 conn = get_engine()
 
-# Period limit for outcome to resolve - handled as unresolved if X or Y thresholds do not hit
+# Period limit for outcome to resolve - handled as unresolved if A or B thresholds do not hit
 holding_period = 1400000
 
 query = """
@@ -56,5 +56,5 @@ plt.figure(figsize=(12, 8))
 ax = sns.heatmap(contingency_table, annot=True, cmap="viridis")
 
 ax.invert_yaxis()
-plt.title(f"P(X before Y) and resolved within {holding_period} periods")
+plt.title(f"P(X before B) and resolved within {holding_period} periods")
 plt.show()

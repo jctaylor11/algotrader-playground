@@ -108,7 +108,7 @@ df_multi_contingency = df_raw.pivot_table(values='probability', index='threshold
 fig, axs = plt.subplots(figsize=(16, 9))
 sns.heatmap(df_multi_contingency, cmap='viridis')
 axs.invert_yaxis()
-fig.suptitle(f"Probability of Threshold X Before Treshold Y\nIndicator ID {indicator_id}, All Percentile Bins Multi-Index", fontsize=24)
+fig.suptitle(f"Probability of Threshold A Before Treshold B\nIndicator ID {indicator_id}, All Percentile Bins Multi-Index", fontsize=24)
 plt.show()
 
 
