@@ -28,8 +28,8 @@ query = """
         FROM OUTCOMES
     )
     SELECT
-        a.return_threshold AS threshold_x,
-        b.return_threshold AS threshold_y,
+        a.return_threshold AS threshold_a,
+        b.return_threshold AS threshold_b,
         COUNT(*) AS count_x_before_y,
         total_candles
     FROM outcomes a
@@ -38,8 +38,8 @@ query = """
     WHERE (a.candles_to_hit < b.candles_to_hit
         OR (a.candles_to_hit IS NOT NULL AND b.candles_to_hit IS NULL)) 
         AND a.candles_to_hit <= :holding_period
-    GROUP BY threshold_x, threshold_y, total_candles
-    ORDER BY threshold_x;
+    GROUP BY threshold_a, threshold_b, total_candles
+    ORDER BY threshold_a;
 """
 
 outcomes_df = pd.read_sql(text(query), conn, params={"holding_period": holding_period})
@@ -49,7 +49,7 @@ total_candles = outcomes_df['total_candles'][0]
 outcomes_df['probability'] = outcomes_df['count_x_before_y'] / total_candles
 
 # The df is in long format, and therefore pivoted to create a contingency table to count values where row threshold is hit by colum threshold
-contingency_table = outcomes_df.pivot_table(index='threshold_y', columns='threshold_x', values='probability')
+contingency_table = outcomes_df.pivot_table(index='threshold_a', columns='threshold_b', values='probability')
 
 # Seaborn to plot the contingency table
 plt.figure(figsize=(12, 8))
