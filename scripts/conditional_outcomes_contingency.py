@@ -8,7 +8,7 @@ from src.data.database import get_engine
 conn = get_engine()
 
 number_of_bins = 10     # For discretisation of indicator values by percentile
-holding_period = 1000     # Period limit for outcome to resolve - handled as unresolved if A or B thresholds do not hit
+holding_period = 20     # Period limit for outcome to resolve - handled as unresolved if A or B thresholds do not hit
 
 query = """
     WITH indicator_binned AS (
@@ -84,12 +84,12 @@ p_min = df_raw['probability'].min()
 p_max = df_raw['probability'].max()
 
 # Filter for indicator
-df_raw = df_raw[df_raw['indicator_id'] == indicator_id]
+df_raw_ind = df_raw[df_raw['indicator_id'] == indicator_id]
 
 # Iterates through each bin and adds as subplot
-total_bins = df_raw['percentile_bin'].unique()
+total_bins = df_raw_ind['percentile_bin'].unique()
 for i, p_bin in enumerate(sorted(total_bins)):               # TODO: should be filtered for indicator id outside of the loop 
-    df_bin = df_raw.loc[(df_raw['percentile_bin'] == p_bin)] 
+    df_bin = df_raw_ind.loc[(df_raw['percentile_bin'] == p_bin)] 
     df_contingency = df_bin.pivot_table(values='probability', index='threshold_a', columns='threshold_b')
     sns.heatmap(df_contingency, ax=axs[i], cmap='viridis', vmin=p_min, vmax=p_max, cbar=False)
     axs[i].invert_yaxis()
@@ -115,11 +115,11 @@ plt.show()
 
 ## Single EV plot
 # Self join to retrieve P(B before A) by flipping the index on P(A before B)
-df_ev_merged = df_raw.merge(df_raw, left_on=['threshold_a', 'threshold_b'], right_on=['threshold_b', 'threshold_a'], suffixes=['_A', '_B'])
+df_ev_merged = df_raw.merge(df_raw, left_on=['threshold_a', 'threshold_b', 'percentile_bin', 'indicator_id'], right_on=['threshold_b', 'threshold_a', 'percentile_bin', 'indicator_id'], suffixes=['_A', '_B'])
 df_ev_merged['ev'] = abs(df_ev_merged['threshold_a_A']) * df_ev_merged['probability_A'] + (-abs(df_ev_merged['threshold_b_A']) * df_ev_merged['probability_B'])
 
 # Filter for bin and indicator to display
-df_ev_bin = df_ev_merged.loc[(df_ev_merged['indicator_id_A'] == indicator_id) & (df_ev_merged['percentile_bin_A'] == percentile_bin)].copy()   # Filter for bin
+df_ev_bin = df_ev_merged.loc[(df_ev_merged['indicator_id'] == indicator_id) & (df_ev_merged['percentile_bin'] == percentile_bin)].copy()   # Filter for bin
 ev_contingency = df_ev_bin.pivot_table(values='ev', index='threshold_a_A', columns='threshold_b_A')
 
 # Plot heatmap
@@ -136,16 +136,16 @@ fig, axs = plt.subplots(3,4,figsize=(16, 9))
 axs = axs.flatten()     # To make it iterable
 
 # Filter for indicator
-df_ev_merged = df_ev_merged.loc[df_ev_merged['indicator_id_A'] == indicator_id].copy()
+df_ev_merged = df_ev_merged.loc[df_ev_merged['indicator_id'] == indicator_id].copy()
 
 # Get extreme values for colour bar
 ev_max = df_ev_merged['ev'].max()
 ev_min = df_ev_merged['ev'].min()
 
 # Loop through each bin and add to the plot
-total_bins = df_ev_merged['percentile_bin_A'].unique()
+total_bins = df_ev_merged['percentile_bin'].unique()
 for i, p_bin in enumerate(sorted(total_bins)): 
-    df_ev_bin = df_ev_merged.loc[df_ev_merged['percentile_bin_A'] == p_bin]
+    df_ev_bin = df_ev_merged.loc[df_ev_merged['percentile_bin'] == p_bin]
     ev_contingency = df_ev_bin.pivot_table(values='ev', index='threshold_a_A', columns='threshold_b_A')
     sns.heatmap(ev_contingency, ax=axs[i], cmap='RdBu', vmin=ev_min, vmax=ev_max, cbar=False)
 
@@ -163,3 +163,5 @@ cbar_ax = fig.add_axes([0.93, 0.12, 0.02, 0.78])  # [left, bottom, width, height
 fig.colorbar(plt.cm.ScalarMappable(norm=plt.Normalize(ev_min, ev_max), cmap='RdBu'), cax=cbar_ax, label='EV')
 fig.suptitle(f"Expected Value for Take-Profit/Stop-Loss Setup\nIndicator ID {indicator_id}, All Percentile Bins", fontsize=24)
 plt.show()
+
+
