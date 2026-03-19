@@ -56,5 +56,5 @@ plt.figure(figsize=(12, 8))
 ax = sns.heatmap(contingency_table, annot=True, cmap="viridis")
 
 ax.invert_yaxis()
-plt.title(f"P(X before B) and resolved within {holding_period} periods")
+plt.title(f"P(A before B) and resolved within {holding_period} periods")
 plt.show()
