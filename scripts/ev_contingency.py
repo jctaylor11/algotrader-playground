@@ -12,6 +12,10 @@ from src.data.database import get_engine
 
 
 def fetch_data(number_of_bins, holding_period):
+    """
+    Returns a DataFrame with columns: candle_id, indicator_id, percentile_bin,
+    threshold_a, threshold_b, a_hit_before_b, bin_candle_count.
+    """
     conn = get_engine()
  
     query = """
@@ -66,6 +70,7 @@ def fetch_data(number_of_bins, holding_period):
 
 
 def get_bin_probability_contingency(df_outcomes, percentile_bin):
+    """Returns probability contingency pivot table for the specified bin."""
     df_bin = df_outcomes.loc[df_outcomes['percentile_bin'] == percentile_bin]   # Filter for bin
     single_bin_contingency = df_bin.pivot_table(values='probability', index='threshold_a', columns='threshold_b')
 
@@ -92,6 +97,7 @@ def get_bin_ev_contingency(df_outcomes, percentile_bin):
 
 
 def plot_heatmap(contingency, colour, title, center=None):
+    """Returns a heatmap figure for a single contingency."""
     fig, ax = plt.subplots(figsize=(12,8))
     sns.heatmap(contingency, ax=ax, cmap=colour, center=center)
     fig.suptitle(title, fontsize=24)
@@ -106,6 +112,7 @@ def plot_heatmap(contingency, colour, title, center=None):
 
 
 def plot_multi_heatmap(contingency, colour, title):
+    """Returns a heatmap figure for a multi-index contingency across all bins."""
     fig, ax = plt.subplots(figsize=(16, 9))
     sns.heatmap(contingency, ax=ax, cmap=colour)
     fig.suptitle(title, fontsize=24)
@@ -162,7 +169,7 @@ def main():
     holding_period = 20     # Period limit for outcome to resolve - handled as unresolved if A or B thresholds do not hit
 
     indicator_id = 1
-    percentile_bin = 1
+    percentile_bin = 8
 
     # Fetch raw data and process outcomes dataframe with probabilites for each threshold pair for each bin
     df_outcomes = fetch_data(number_of_bins, holding_period)

@@ -145,9 +145,6 @@ if st.session_state.run_strategy_clicked:
         performance_metrics = st.session_state.backtester.performance_metrics
         results = st.session_state.backtester.results
 
-        print(performance_metrics)
-        print(results)
-
         total_return = performance_metrics.loc["Strategy", "Total Return"]
         benchmark_return = performance_metrics.loc["Buy & Hold", "Total Return"]
         excess_return = total_return - benchmark_return

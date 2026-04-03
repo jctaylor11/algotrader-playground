@@ -113,7 +113,7 @@ def _format_ohlcv_data(df):
     df = df[["open", "high", "low", "close", "volume"]].copy()
 
     for col in df.columns:
-        df[col] = pd.to_numeric(df[col], errors = "coerce")
+        df[col] = pd.to_numeric(df[col], errors="coerce")
 
     return df
 
