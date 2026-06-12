@@ -212,6 +212,9 @@ __marimo__/
 # Anaconda
 anaconda_projects/
 
+# Claude
+CLAUDE.md
+
 # All user-saved ohlcv csv data
 raw_ohlcv/ 
 
